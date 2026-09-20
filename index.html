@@ -1,0 +1,1369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Jewellery GST">
+<meta name="theme-color" content="#3a2e1a">
+<meta name="mobile-web-app-capable" content="yes">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💎</text></svg>">
+<title>Jewellery GST Pro — Gold & Silver Manufacturing</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.3.1/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.3.1/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.24.7/babel.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:#f5f3ef;color:#1a1a2e;-webkit-text-size-adjust:100%}
+::-webkit-scrollbar{width:5px}::-webkit-scrollbar-thumb{background:#c4b89a;border-radius:3px}
+@keyframes slideIn{from{transform:translateX(80px);opacity:0}to{transform:translateX(0);opacity:1}}
+@keyframes fadeIn{from{opacity:0;transform:scale(.97)}to{opacity:1;transform:scale(1)}}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+input:focus,select:focus,textarea:focus{border-color:#8b6914!important;box-shadow:0 0 0 3px rgba(139,105,20,.12)}
+input,select,textarea{font-size:16px!important} /* Prevent iOS zoom */
+button{transition:all .12s ease;-webkit-tap-highlight-color:transparent}
+button:hover{filter:brightness(1.06)}button:active{transform:scale(.97)}
+.row-hover:hover{background:#faf8f4}
+@media print{.no-print{display:none!important}.print-only{display:block!important}}
+.print-only{display:none}
+.overdue-pulse{animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+
+/* ═══ MOBILE RESPONSIVE ═══ */
+.sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:7999}
+
+/* Mobile: < 768px */
+@media(max-width:768px){
+  .sidebar{position:fixed!important;left:-260px;z-index:8000!important;height:100vh!important;width:240px!important;transition:left .25s ease}
+  .sidebar.open{left:0}
+  .sidebar-overlay.show{display:block}
+  .main-content{margin-left:0!important;padding:12px!important}
+  .page-header{flex-direction:column!important;align-items:stretch!important}
+  .page-header .header-actions{width:100%;justify-content:space-between}
+  .stat-grid{grid-template-columns:repeat(2,1fr)!important;gap:8px!important}
+  .stat-card{padding:12px!important}
+  .stat-card .stat-val{font-size:16px!important}
+  .form-grid-3{grid-template-columns:1fr!important}
+  .form-grid-2{grid-template-columns:1fr!important}
+  .item-grid-6{grid-template-columns:1fr 1fr!important}
+  .item-grid-inner{grid-template-columns:1fr 1fr!important}
+  .btn-group{flex-direction:column}
+  .btn-group button{width:100%;justify-content:center}
+  .table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .table-wrap table{min-width:600px}
+  .modal-body{padding:14px!important}
+  .modal-box{margin-top:8px!important;max-height:92vh!important;border-radius:12px 12px 0 0!important}
+  .top-bar{display:flex!important}
+  .quick-actions{flex-direction:column}
+  .quick-actions button{width:100%}
+  .totals-panel{width:100%!important}
+  .settings-wrap{max-width:100%!important}
+}
+
+/* Tablet: 768-1024px */
+@media(min-width:769px) and (max-width:1024px){
+  .stat-grid{grid-template-columns:repeat(3,1fr)!important}
+  .form-grid-3{grid-template-columns:1fr 1fr!important}
+  .item-grid-6{grid-template-columns:repeat(3,1fr)!important}
+}
+
+/* Top bar for mobile */
+.top-bar{display:none;position:sticky;top:0;z-index:7000;background:#3a2e1a;padding:10px 14px;align-items:center;gap:10px;box-shadow:0 2px 12px rgba(0,0,0,.15)}
+.top-bar-title{font-weight:700;font-size:14px;color:#e8d5a3;flex:1}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel" data-type="module">
+const {useState,useEffect,useCallback,useRef,useMemo}=React;
+
+// ═══════════════════════════════════════
+// CONSTANTS
+// ═══════════════════════════════════════
+const STATES=[
+{n:"Andaman and Nicobar Islands",c:"35"},{n:"Andhra Pradesh",c:"37"},{n:"Arunachal Pradesh",c:"12"},
+{n:"Assam",c:"18"},{n:"Bihar",c:"10"},{n:"Chandigarh",c:"04"},{n:"Chhattisgarh",c:"22"},
+{n:"Dadra & Nagar Haveli and Daman & Diu",c:"26"},{n:"Delhi",c:"07"},{n:"Goa",c:"30"},
+{n:"Gujarat",c:"24"},{n:"Haryana",c:"06"},{n:"Himachal Pradesh",c:"02"},{n:"Jammu & Kashmir",c:"01"},
+{n:"Jharkhand",c:"20"},{n:"Karnataka",c:"29"},{n:"Kerala",c:"32"},{n:"Ladakh",c:"38"},
+{n:"Lakshadweep",c:"31"},{n:"Madhya Pradesh",c:"23"},{n:"Maharashtra",c:"27"},{n:"Manipur",c:"14"},
+{n:"Meghalaya",c:"17"},{n:"Mizoram",c:"15"},{n:"Nagaland",c:"13"},{n:"Odisha",c:"21"},
+{n:"Puducherry",c:"34"},{n:"Punjab",c:"03"},{n:"Rajasthan",c:"08"},{n:"Sikkim",c:"11"},
+{n:"Tamil Nadu",c:"33"},{n:"Telangana",c:"36"},{n:"Tripura",c:"16"},{n:"Uttar Pradesh",c:"09"},
+{n:"Uttarakhand",c:"05"},{n:"West Bengal",c:"19"}
+];
+const PURITIES=[{l:'999 (24K Fine Gold)',v:'999'},{l:'916 (22K)',v:'916'},{l:'750 (18K)',v:'750'},{l:'585 (14K)',v:'585'},{l:'925 (Sterling Silver)',v:'925'},{l:'900 (Coin Silver)',v:'900'},{l:'Custom',v:'custom'}];
+const HSN_CODES=['7113','7108','7106','7114','7117','7116','7115'];
+const GST_RATES=[0,0.25,1.5,3,5,12,18,28];
+const MAKING_TYPES=[{l:'Per Gram',v:'per_gm'},{l:'Per Piece',v:'per_pc'},{l:'Lumpsum',v:'lumpsum'}];
+const DC_PURPOSES=['Polishing','Stone Setting','Rhodium Plating','Hallmarking','Engraving','Finishing','Repair','Other'];
+const EXP_CATS=["Travel","Fuel","Lodging","Food","Office Supplies","Rent","Utilities","Professional Fees","Marketing","Hallmarking Fees","Courier","Insurance","Salary","Miscellaneous"];
+const PAY_MODES=['Cash','Bank Transfer','UPI','Cheque','Card','RTGS/NEFT','DD'];
+
+// ═══════════════════════════════════════
+// UTILITIES
+// ═══════════════════════════════════════
+const gid=(p="")=>p+Date.now().toString(36)+Math.random().toString(36).substr(2,5);
+const fD=(d)=>d?new Date(d).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}):'';
+const fC=(n)=>'₹'+(Number(n)||0).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2});
+const fW=(n)=>(Number(n)||0).toLocaleString('en-IN',{minimumFractionDigits:3,maximumFractionDigits:3})+' gm';
+const td=()=>new Date().toISOString().split('T')[0];
+const addDays=(d,n)=>{const x=new Date(d);x.setDate(x.getDate()+n);return x.toISOString().split('T')[0]};
+const daysDiff=(d1,d2)=>Math.ceil((new Date(d2||new Date())-new Date(d1))/(1000*60*60*24));
+
+function numWords(num){
+  if(!num||num===0)return"Zero Rupees Only";
+  const a=["","One","Two","Three","Four","Five","Six","Seven","Eight","Nine","Ten","Eleven","Twelve","Thirteen","Fourteen","Fifteen","Sixteen","Seventeen","Eighteen","Nineteen"];
+  const b=["","","Twenty","Thirty","Forty","Fifty","Sixty","Seventy","Eighty","Ninety"];
+  const cv=(n)=>{if(n<20)return a[n];if(n<100)return b[Math.floor(n/10)]+(n%10?" "+a[n%10]:"");if(n<1000)return a[Math.floor(n/100)]+" Hundred"+(n%100?" and "+cv(n%100):"");if(n<100000)return cv(Math.floor(n/1000))+" Thousand"+(n%1000?" "+cv(n%1000):"");if(n<10000000)return cv(Math.floor(n/100000))+" Lakh"+(n%100000?" "+cv(n%100000):"");return cv(Math.floor(n/10000000))+" Crore"+(n%10000000?" "+cv(n%10000000):"");};
+  const r=Math.floor(num);const p=Math.round((num-r)*100);
+  let s="Rupees "+cv(r);if(p>0)s+=" and "+cv(p)+" Paise";return s+" Only";
+}
+
+const LS={
+  get:(k,def=null)=>{try{const v=localStorage.getItem('jgp_'+k);return v?JSON.parse(v):def}catch{return def}},
+  set:(k,v)=>{try{localStorage.setItem('jgp_'+k,JSON.stringify(v))}catch{}}
+};
+
+async function apiCall(url,sheetId,action,data={}){
+  const r=await fetch(url,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify({action,data,sheetId}),redirect:'follow'});
+  return await r.json();
+}
+
+// ═══════════════════════════════════════
+// ICONS
+// ═══════════════════════════════════════
+function Ic({name,size=20,color}){
+  const P={
+    menu:[{d:"M4 6h16"},{d:"M4 12h16"},{d:"M4 18h16"}],
+    home:[{d:"M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"},{d:"M9 22V12h6v10"}],
+    users:[{d:"M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"},{d:"M9 7a4 4 0 1 0 0-8 4 4 0 0 0 0 8z"}],
+    box:[{d:"M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"}],
+    file:[{d:"M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"},{d:"M14 2v6h6"},{d:"M16 13H8"},{d:"M16 17H8"}],
+    truck:[{d:"M1 3h15v13H1z"},{d:"M16 8h4l3 3v5h-7V8z"},{d:"M5.5 21a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z"},{d:"M18.5 21a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z"}],
+    tag:[{d:"M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"},{d:"M7 7h.01"}],
+    plus:[{d:"M12 5v14"},{d:"M5 12h14"}],
+    save:[{d:"M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"},{d:"M17 21v-8H7v8"},{d:"M7 3v5h8"}],
+    trash:[{d:"M3 6h18"},{d:"M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"}],
+    edit:[{d:"M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"},{d:"M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"}],
+    sync:[{d:"M23 4v6h-6"},{d:"M1 20v-6h6"},{d:"M3.51 9a9 9 0 0 1 14.85-3.36L23 10"},{d:"M1 14l4.64 4.36A9 9 0 0 0 20.49 15"}],
+    gear:[{d:"M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"},{d:"M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"}],
+    check:[{d:"M20 6L9 17l-5-5"}],
+    x:[{d:"M18 6L6 18"},{d:"M6 6l12 12"}],
+    search:[{d:"M11 19a8 8 0 1 0 0-16 8 8 0 0 0 0 16z"},{d:"M21 21l-4.35-4.35"}],
+    print:[{d:"M6 9V2h12v7"},{d:"M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"},{d:"M6 14h12v8H6z"}],
+    eye:[{d:"M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"},{d:"M12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6z"}],
+    logout:[{d:"M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"},{d:"M16 17l5-5-5-5"},{d:"M21 12H9"}],
+    link:[{d:"M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"},{d:"M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"}],
+    alert:[{d:"M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20z"},{d:"M12 8v4"},{d:"M12 16h.01"}],
+    up:[{d:"M12 19V5"},{d:"M5 12l7-7 7 7"}],
+    down:[{d:"M12 5v14"},{d:"M19 12l-7 7-7-7"}],
+    dollar:[{d:"M12 1v22"},{d:"M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"}],
+    wallet:[{d:"M21 12V7H5a2 2 0 0 1 0-4h14v4"},{d:"M3 5v14a2 2 0 0 0 2 2h16v-5"},{d:"M18 12a2 2 0 0 0 0 4h4v-4z"}],
+    receipt:[{d:"M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1z"},{d:"M8 10h8"},{d:"M8 14h4"}],
+    list:[{d:"M8 6h13"},{d:"M8 12h13"},{d:"M8 18h13"},{d:"M3 6h.01"},{d:"M3 12h.01"},{d:"M3 18h.01"}],
+    cloud:[{d:"M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"}],
+    image:[{d:"M5 3h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"},{d:"M8.5 10a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3z"},{d:"M21 15l-5-5L5 21"}],
+    globe:[{d:"M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20z"},{d:"M2 12h20"},{d:"M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"}],
+    repeat:[{d:"M17 1l4 4-4 4"},{d:"M3 11V9a4 4 0 0 1 4-4h14"},{d:"M7 23l-4-4 4-4"},{d:"M21 13v2a4 4 0 0 1-4 4H3"}],
+  };
+  const p=P[name]||[];
+  return <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color||"currentColor"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">{p.map((s,i)=><path key={i} d={s.d}/>)}</svg>;
+}
+
+// ═══════════════════════════════════════
+// STYLES
+// ═══════════════════════════════════════
+const S={
+  inp:{width:'100%',padding:'9px 13px',borderRadius:8,border:'1.5px solid #ddd5c5',fontSize:14,outline:'none',background:'#fff',transition:'border .2s,box-shadow .2s'},
+  lbl:{display:'block',marginBottom:3,fontSize:12.5,fontWeight:600,color:'#5a5040'},
+  btnP:{padding:'9px 18px',borderRadius:8,border:'none',background:'#6b4f1d',color:'#fff',cursor:'pointer',fontWeight:600,fontSize:13.5,display:'inline-flex',alignItems:'center',gap:5},
+  btnS:{padding:'9px 18px',borderRadius:8,border:'1.5px solid #ddd5c5',background:'#fff',color:'#5a5040',cursor:'pointer',fontWeight:600,fontSize:13.5,display:'inline-flex',alignItems:'center',gap:5},
+  btnD:{padding:'9px 18px',borderRadius:8,border:'none',background:'#c0392b',color:'#fff',cursor:'pointer',fontWeight:600,fontSize:13.5,display:'inline-flex',alignItems:'center',gap:5},
+  btnSm:{padding:'5px 9px',borderRadius:6,fontSize:12.5},
+  card:{background:'#fff',borderRadius:12,border:'1px solid #e8e0d0',overflow:'hidden'},
+  th:{padding:'9px 12px',textAlign:'left',fontSize:11.5,fontWeight:700,color:'#8a7e6b',textTransform:'uppercase',letterSpacing:'.4px',background:'#faf8f4',borderBottom:'2px solid #e8e0d0'},
+  td:{padding:'9px 12px',fontSize:13.5,borderBottom:'1px solid #f3efe8',color:'#3a3530'},
+};
+
+// ═══════════════════════════════════════
+// UI COMPONENTS
+// ═══════════════════════════════════════
+function Toast({msg,type="info",onClose}){
+  const bg=type==="success"?"#27ae60":type==="error"?"#c0392b":type==="warning"?"#d4a017":"#2c3e50";
+  useEffect(()=>{const t=setTimeout(onClose,3500);return()=>clearTimeout(t);},[]);
+  return <div style={{position:'fixed',top:18,right:18,zIndex:9999,background:bg,color:'#fff',padding:'11px 18px',borderRadius:10,boxShadow:'0 6px 28px rgba(0,0,0,.2)',maxWidth:380,fontSize:13.5,display:'flex',alignItems:'center',gap:8,animation:'slideIn .25s ease'}}>
+    <span style={{flex:1}}>{msg}</span><span onClick={onClose} style={{cursor:'pointer',opacity:.7,fontSize:16}}>×</span>
+  </div>;
+}
+
+function Modal({open,onClose,title,children,wide}){
+  if(!open)return null;
+  return <div style={{position:'fixed',inset:0,zIndex:9000,display:'flex',alignItems:'flex-start',justifyContent:'center',background:'rgba(0,0,0,.4)',padding:window.innerWidth<=768?'0':'24px 12px',overflow:'auto',animation:'fadeIn .15s'}} onClick={onClose}>
+    <div className="modal-box" style={{background:'#fff',borderRadius:window.innerWidth<=768?'14px 14px 0 0':14,width:'100%',maxWidth:wide?900:560,boxShadow:'0 20px 56px rgba(0,0,0,.2)',marginTop:window.innerWidth<=768?'auto':20,maxHeight:window.innerWidth<=768?'95vh':'78vh',display:'flex',flexDirection:'column',animation:window.innerWidth<=768?'slideUp .25s ease':'fadeIn .15s'}} onClick={e=>e.stopPropagation()}>
+      <div style={{padding:'14px 16px',borderBottom:'1px solid #e8e0d0',display:'flex',alignItems:'center',justifyContent:'space-between',position:'sticky',top:0,background:'#fff',zIndex:1,borderRadius:window.innerWidth<=768?'14px 14px 0 0':'14px 14px 0 0',flexShrink:0}}>
+        <h3 style={{margin:0,fontSize:16,fontWeight:700,color:'#3a2e1a'}}>{title}</h3>
+        <button onClick={onClose} style={{background:'#f5f0e8',border:'none',borderRadius:7,width:34,height:34,display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer'}}><Ic name="x" size={16}/></button>
+      </div>
+      <div className="modal-body" style={{padding:20,overflow:'auto',flex:1,WebkitOverflowScrolling:'touch'}}>{children}</div>
+    </div>
+  </div>;
+}
+
+function Confirm({open,onClose,onOk,title,msg}){
+  if(!open)return null;
+  return <div style={{position:'fixed',inset:0,zIndex:9500,display:'flex',alignItems:'center',justifyContent:'center',background:'rgba(0,0,0,.45)',padding:16}} onClick={onClose}>
+    <div style={{background:'#fff',borderRadius:14,width:'100%',maxWidth:400,boxShadow:'0 20px 56px rgba(0,0,0,.25)',animation:'fadeIn .15s'}} onClick={e=>e.stopPropagation()}>
+      <div style={{padding:24,textAlign:'center'}}>
+        <div style={{width:48,height:48,borderRadius:'50%',background:'#fef3c7',display:'flex',alignItems:'center',justifyContent:'center',margin:'0 auto 14px',color:'#d4a017'}}><Ic name="alert" size={24}/></div>
+        <h3 style={{margin:'0 0 6px',fontSize:16,fontWeight:700}}>{title}</h3>
+        <p style={{margin:'0 0 20px',color:'#6b6358',fontSize:13.5,lineHeight:1.5}}>{msg}</p>
+        <div style={{display:'flex',gap:10,justifyContent:'center'}}>
+          <button style={S.btnS} onClick={onClose}>Cancel</button>
+          <button style={S.btnP} onClick={onOk}>Confirm</button>
+        </div>
+      </div>
+    </div>
+  </div>;
+}
+
+function Badge({text,color='#6b4f1d',bg='#f5f0e8'}){
+  return <span style={{display:'inline-block',fontSize:10.5,fontWeight:700,padding:'2px 7px',borderRadius:4,background:bg,color,letterSpacing:'.3px'}}>{text}</span>;
+}
+
+// ═══════════════════════════════════════
+// PRINT BUILDER — Common header with logo
+// ═══════════════════════════════════════
+function buildPrintHeader(company,docTitle,docNumber,docDate,logo){
+  return `<div style="display:flex;justify-content:space-between;align-items:flex-start;padding:24px 30px 18px;border-bottom:3px solid #6b4f1d">
+    <div style="display:flex;align-items:flex-start;gap:14px">
+      ${logo?`<img src="${logo}" style="width:60px;height:60px;object-fit:contain;border-radius:6px"/>`:''}
+      <div>
+        <div style="font-size:18px;font-weight:700;color:#3a2e1a;letter-spacing:.3px">${company.companyName||'COMPANY NAME'}</div>
+        <div style="font-family:monospace;font-size:10.5px;color:#8a7e6b;margin-top:2px">GSTIN: ${company.gstin||'—'} | PAN: ${company.pan||'—'}</div>
+        <div style="font-size:11.5px;color:#5a5040;margin-top:4px;line-height:1.6">${company.address||''}, ${company.city||''}<br/>${company.state||''} (${company.stateCode||''}) | Ph: ${company.phone||''}</div>
+      </div>
+    </div>
+    <div style="text-align:right">
+      <div style="font-size:14px;font-weight:700;color:#6b4f1d;letter-spacing:1px;margin-bottom:6px">${docTitle}</div>
+      <div style="font-family:monospace;font-size:16px;font-weight:700;color:#3a2e1a">${docNumber||''}</div>
+      <div style="font-size:11.5px;color:#8a7e6b;margin-top:4px">Date: ${docDate||''}</div>
+    </div>
+  </div>`;
+}
+
+function buildPrintFooter(company){
+  return `<div style="display:flex;justify-content:space-between;padding:18px 30px;border-top:2px solid #e8e0d0;margin-top:16px;background:#faf8f4">
+    <div>
+      <div style="font-size:9.5px;font-weight:700;letter-spacing:1px;color:#6b4f1d;text-transform:uppercase;margin-bottom:4px">Bank Details</div>
+      <div style="font-size:11.5px;color:#5a5040;line-height:1.7"><strong>${company.bankName||'—'}</strong><br/>A/c: <span style="font-family:monospace;font-size:11px;color:#3a2e1a">${company.accountNo||'—'}</span><br/>IFSC: <span style="font-family:monospace;font-size:11px;color:#3a2e1a">${company.ifsc||'—'}</span></div>
+    </div>
+    <div style="text-align:right;display:flex;flex-direction:column;justify-content:flex-end">
+      <div style="width:130px;border-bottom:1px solid #8a7e6b;margin-left:auto;margin-bottom:4px"></div>
+      <div style="font-size:11.5px;font-weight:700">Authorized Signatory</div>
+      <div style="font-size:10px;color:#8a7e6b">${company.companyName||''}</div>
+    </div>
+  </div>`;
+}
+
+function printDoc(html){
+  const w=window.open('','','width=860,height=700');
+  w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Segoe UI',Arial,sans-serif;color:#3a2e1a;line-height:1.4;padding:6px}@media print{body{padding:0}}</style></head><body>${html}</body></html>`);
+  w.document.close();
+  setTimeout(()=>w.print(),350);
+}
+
+// ═══════════════════════════════════════
+// MAIN APPLICATION
+// ═══════════════════════════════════════
+function App(){
+  const [url,setUrl]=useState(()=>LS.get('url',''));
+  const [sid,setSid]=useState(()=>LS.get('sid',''));
+  const [conn,setConn]=useState(false);
+  const [syncing,setSyncing]=useState(false);
+  const [lastSync,setLastSync]=useState(null);
+
+  const [customers,setCust]=useState(()=>LS.get('customers',[]));
+  const [products,setProd]=useState(()=>LS.get('products',[]));
+  const [invoices,setInv]=useState(()=>LS.get('invoices',[]));
+  const [dcs,setDcs]=useState(()=>LS.get('dcs',[]));
+  const [lineOfSales,setLos]=useState(()=>LS.get('lineOfSales',[]));
+  const [expenses,setExp]=useState(()=>LS.get('expenses',[]));
+  const [receipts,setRec]=useState(()=>LS.get('receipts',[]));
+  const [payments,setPay]=useState(()=>LS.get('payments',[]));
+  const [company,setCo]=useState(()=>LS.get('company',{state:'Tamil Nadu',stateCode:'33'}));
+  const [logo,setLogo]=useState(()=>LS.get('logo',''));
+  const [settings,setSettings]=useState(()=>LS.get('settings',{dcLimit:3,losLimit:1,defaultPurity:'916',defaultGst:3}));
+
+  const [page,setPage]=useState('dashboard');
+  const [sideOpen,setSideOpen]=useState(window.innerWidth>768);
+  const [toast,setToast]=useState(null);
+  const [search,setSearch]=useState('');
+
+  // Modals
+  const [mCust,setMCust]=useState(null);
+  const [mProd,setMProd]=useState(null);
+  const [mInv,setMInv]=useState(null);
+  const [mDc,setMDc]=useState(null);
+  const [mLos,setMLos]=useState(null);
+  const [mExp,setMExp]=useState(null);
+  const [mRec,setMRec]=useState(null);
+  const [mPay,setMPay]=useState(null);
+  const [mView,setMView]=useState(null);
+  const [delConfirm,setDelConfirm]=useState(null);
+
+  const notify=(msg,type="info")=>setToast({msg,type});
+
+  // Auto-save to localStorage
+  useEffect(()=>{LS.set('customers',customers)},[customers]);
+  useEffect(()=>{LS.set('products',products)},[products]);
+  useEffect(()=>{LS.set('invoices',invoices)},[invoices]);
+  useEffect(()=>{LS.set('dcs',dcs)},[dcs]);
+  useEffect(()=>{LS.set('lineOfSales',lineOfSales)},[lineOfSales]);
+  useEffect(()=>{LS.set('expenses',expenses)},[expenses]);
+  useEffect(()=>{LS.set('receipts',receipts)},[receipts]);
+  useEffect(()=>{LS.set('payments',payments)},[payments]);
+
+  // ═══ API + SYNC ENGINE ═══
+  const api=async(action,data={})=>{if(!url||!sid)return null;try{return await apiCall(url,sid,action,data)}catch(e){console.warn('API:',e);return null}};
+
+  // Connect to Google Sheet
+  const connect=async()=>{
+    if(!url||!sid){notify("Enter both Web App URL and Sheet ID","warning");return;}
+    setSyncing(true);
+    try{
+      const r=await apiCall(url,sid,'setupSheets',{});
+      if(r.success){LS.set('url',url);LS.set('sid',sid);setConn(true);notify("Connected! Syncing data...","success");await fullSync();}
+      else notify(r.error||"Connection failed","error");
+    }catch(e){notify("Connection error: "+e.message,"error");}
+    setSyncing(false);
+  };
+
+  // Full sync — pull all data from Google Sheet
+  const fullSync=async()=>{
+    if(!url||!sid)return;setSyncing(true);
+    try{
+      const r=await apiCall(url,sid,'getAll',{});
+      if(r.success&&r.data){
+        const d=r.data;
+        if(d.customers)setCust(d.customers.map(c=>({id:c.id,name:c.name||'',type:c.type||'Retailer',gstin:c.gstin||'',address:c.address||'',city:c.city||'',state:c.state||'',stateCode:c.statecode||c.stateCode||'',phone:c.phone||'',email:c.email||'',createdAt:c.createdat||''})));
+        if(d.products)setProd(d.products.map(p=>({id:p.id,name:p.name||'',hsn:p.hsn||'7113',defaultPurity:p.defaultpurity||p.defaultPurity||'916',makingType:p.makingtype||p.makingType||'per_gm',makingCharge:+(p.makingcharge||p.makingCharge||0),defaultGst:+(p.defaultgst||p.defaultGst||3),description:p.description||'',createdAt:p.createdat||''})));
+        if(d.invoices)setInv(d.invoices.map(v=>{let items=[];try{items=typeof v.itemsjson==='string'?JSON.parse(v.itemsjson):(v.items||[])}catch{}return{id:v.id,invoiceNumber:v.invoicenumber||'',invoiceDate:v.invoicedate||'',dueDate:v.duedate||'',invoiceType:v.invoicetype||'B2B',customerName:v.customername||'',customerGstin:v.customergstin||'',customerAddress:v.customeraddress||'',customerState:v.customerstate||'',customerStateCode:v.customerstatecode||'',customerPhone:v.customerphone||'',taxableAmount:+(v.taxableamount||0),cgstAmount:+(v.cgstamount||0),sgstAmount:+(v.sgstamount||0),igstAmount:+(v.igstamount||0),grandTotal:+(v.grandtotal||0),items,notes:v.notes||'',losRef:v.losref||'',createdBy:v.createdby||'',createdAt:v.createdat||''};}));
+        if(d.dcs)setDcs(d.dcs.map(dc=>{let items=[];try{items=typeof dc.itemsjson==='string'?JSON.parse(dc.itemsjson):(dc.items||[])}catch{}return{id:dc.id,dcNumber:dc.dcnumber||'',date:dc.date||'',dueDate:dc.duedate||'',jobworkerName:dc.jobworkername||'',jobworkerAddress:dc.jobworkeraddress||'',purpose:dc.purpose||'',status:dc.status||'Sent',totalWeight:+(dc.totalweight||0),items,notes:dc.notes||'',createdAt:dc.createdat||''};}));
+        if(d.lineofsales||d.lineOfSales){const los=d.lineofsales||d.lineOfSales;setLos(los.map(l=>{let items=[];try{items=typeof l.itemsjson==='string'?JSON.parse(l.itemsjson):(l.items||[])}catch{}return{id:l.id,losNumber:l.losnumber||'',date:l.date||'',retailerName:l.retailername||'',retailerGstin:l.retailergstin||'',retailerAddress:l.retaileraddress||'',retailerState:l.retailerstate||'',retailerStateCode:l.retailerstatecode||'',retailerPhone:l.retailerphone||'',city:l.city||'',status:l.status||'On Approval',totalWeight:+(l.totalweight||0),totalValue:+(l.totalvalue||0),items,notes:l.notes||'',createdAt:l.createdat||''};}));}
+        if(d.expenses)setExp(d.expenses.map(e=>({id:e.id,voucherNo:e.voucherno||'',date:e.date||'',category:e.category||'',vendor:e.vendor||'',amount:+(e.amount||0),gstRate:+(e.gstrate||0),gstAmount:+(e.gstamount||0),total:+(e.total||0),paymentMethod:e.paymentmethod||'Cash',description:e.description||'',createdBy:e.createdby||''})));
+        if(d.receipts)setRec(d.receipts.map(r=>({id:r.id,receiptNo:r.receiptno||'',date:r.date||'',receivedFrom:r.receivedfrom||'',amount:+(r.amount||0),mode:r.mode||'Cash',towards:r.towards||'',description:r.description||'',createdBy:r.createdby||''})));
+        if(d.payments)setPay(d.payments.map(p=>({id:p.id,paymentNo:p.paymentno||'',date:p.date||'',paidTo:p.paidto||'',amount:+(p.amount||0),mode:p.mode||'Cash',towards:p.towards||'',description:p.description||'',createdBy:p.createdby||''})));
+        setConn(true);setLastSync(new Date().toLocaleTimeString());
+        notify("✓ All data synced from Google Sheet","success");
+      }
+    }catch(e){notify("Sync error: "+e.message,"error");}
+    setSyncing(false);
+  };
+
+  // Backup — push all to sheet
+  const backup=async()=>{setSyncing(true);await api('backup',{customers,products,invoices,dcs,lineOfSales,expenses,receipts,payments});notify("Full backup pushed","success");setSyncing(false);};
+
+  // Auto-connect on load
+  useEffect(()=>{if(url&&sid&&!conn){connect();}},[]);
+
+  // ═══ CRUD + SYNC ═══
+  const saveCust=async(c)=>{
+    const isNew=!c.id||!customers.find(x=>x.id===c.id);
+    const d={...c,id:c.id||gid('C'),createdAt:c.createdAt||new Date().toISOString()};
+    if(isNew)setCust(p=>[...p,d]);else setCust(p=>p.map(x=>x.id===d.id?d:x));
+    api('syncCustomer',d);notify("Customer saved"+(conn?" → Sheet synced":""),"success");setMCust(null);return d;
+  };
+
+  const saveProd=async(p)=>{
+    const isNew=!p.id||!products.find(x=>x.id===p.id);
+    const d={...p,id:p.id||gid('P'),createdAt:p.createdAt||new Date().toISOString()};
+    if(isNew)setProd(prev=>[...prev,d]);else setProd(prev=>prev.map(x=>x.id===d.id?d:x));
+    api('syncProduct',d);notify("Product saved"+(conn?" → Sheet synced":""),"success");setMProd(null);return d;
+  };
+  
+  const saveInvoice=async(inv)=>{
+    const d={...inv,id:inv.id||gid('INV'),invoiceNumber:inv.invoiceNumber||'INV-'+String(invoices.length+1).padStart(4,'0')};
+    let taxT=0,gstT=0;
+    (d.items||[]).forEach(it=>{
+      const metalVal=(it.netWt||0)*(it.ratePerGm||0);
+      const makingVal=it.makingType==='per_gm'?(it.makingCharge||0)*(it.netWt||0):it.makingType==='per_pc'?(it.makingCharge||0)*(it.pcs||1):(it.makingCharge||0);
+      const taxable=metalVal+makingVal+(it.stoneCharges||0);
+      const gst=taxable*(it.gstRate||3)/100;
+      taxT+=taxable;gstT+=gst;
+    });
+    const isIGST=d.customerStateCode&&company.stateCode&&d.customerStateCode!==company.stateCode;
+    d.taxableAmount=Math.round(taxT*100)/100;
+    d.cgstAmount=isIGST?0:Math.round(gstT/2*100)/100;
+    d.sgstAmount=isIGST?0:Math.round(gstT/2*100)/100;
+    d.igstAmount=isIGST?Math.round(gstT*100)/100:0;
+    d.grandTotal=Math.round((taxT+gstT)*100)/100;
+    d.createdAt=d.createdAt||new Date().toISOString();
+    
+    const isNew=!inv.id||!invoices.find(x=>x.id===inv.id);
+    if(isNew)setInv(p=>[...p,d]);else setInv(p=>p.map(x=>x.id===d.id?d:x));
+    api('syncInvoice',d);notify("Invoice saved"+(conn?" → Sheet synced":""),"success");setMInv(null);return d;
+  };
+
+  const saveDC=async(dc)=>{
+    const d={...dc,id:dc.id||gid('DC'),dcNumber:dc.dcNumber||'DC-'+String(dcs.length+1).padStart(4,'0'),dueDate:dc.dueDate||addDays(dc.date||td(),settings.dcLimit),createdAt:dc.createdAt||new Date().toISOString()};
+    const isNew=!dc.id||!dcs.find(x=>x.id===dc.id);
+    if(isNew)setDcs(p=>[...p,d]);else setDcs(p=>p.map(x=>x.id===d.id?d:x));
+    api('syncDC',d);notify("DC saved"+(conn?" → Sheet synced":""),"success");setMDc(null);return d;
+  };
+
+  const saveLOS=async(los)=>{
+    const d={...los,id:los.id||gid('LOS'),losNumber:los.losNumber||'LOS-'+String(lineOfSales.length+1).padStart(4,'0'),createdAt:los.createdAt||new Date().toISOString()};
+    const isNew=!los.id||!lineOfSales.find(x=>x.id===los.id);
+    if(isNew)setLos(p=>[...p,d]);else setLos(p=>p.map(x=>x.id===d.id?d:x));
+    api('syncLOS',d);notify("Line of Sale saved"+(conn?" → Sheet synced":""),"success");setMLos(null);return d;
+  };
+
+  const saveExpense=async(e)=>{
+    const d={...e,id:e.id||gid('EXP'),createdAt:e.createdAt||new Date().toISOString()};
+    const isNew=!e.id||!expenses.find(x=>x.id===e.id);
+    if(isNew)setExp(p=>[...p,d]);else setExp(p=>p.map(x=>x.id===d.id?d:x));
+    api('syncExpense',d);notify("Expense saved"+(conn?" → Sheet synced":""),"success");setMExp(null);return d;
+  };
+
+  const saveReceipt=async(r)=>{
+    const d={...r,id:r.id||gid('REC'),receiptNo:r.receiptNo||'REC-'+String(receipts.length+1).padStart(4,'0'),createdAt:r.createdAt||new Date().toISOString()};
+    const isNew=!r.id||!receipts.find(x=>x.id===r.id);
+    if(isNew)setRec(p=>[...p,d]);else setRec(p=>p.map(x=>x.id===d.id?d:x));
+    api('syncReceipt',d);notify("Receipt saved"+(conn?" → Sheet synced":""),"success");setMRec(null);return d;
+  };
+
+  const savePayment=async(p)=>{
+    const d={...p,id:p.id||gid('PAY'),paymentNo:p.paymentNo||'PAY-'+String(payments.length+1).padStart(4,'0'),createdAt:p.createdAt||new Date().toISOString()};
+    const isNew=!p.id||!payments.find(x=>x.id===p.id);
+    if(isNew)setPay(prev=>[...prev,d]);else setPay(prev=>prev.map(x=>x.id===d.id?d:x));
+    api('syncPayment',d);notify("Payment saved"+(conn?" → Sheet synced":""),"success");setMPay(null);return d;
+  };
+
+  const doDelete=(type)=>{
+    if(!delConfirm)return;
+    const id=delConfirm.id;
+    const delMap={customer:['syncCustomer','deleteCustomer',customers,setCust],product:['syncProduct','deleteProduct',products,setProd],invoice:['syncInvoice','deleteInvoice',invoices,setInv],dc:['syncDC','deleteDC',dcs,setDcs],los:['syncLOS','deleteLOS',lineOfSales,setLos],expense:['syncExpense','deleteExpense',expenses,setExp],receipt:['syncReceipt','deleteReceipt',receipts,setRec],payment:['syncPayment','deletePayment',payments,setPay]};
+    const[_,apiAction,_a,setFn]=delMap[type]||[];
+    if(setFn)setFn(p=>p.filter(x=>x.id!==id));
+    if(apiAction)api(apiAction,{id});
+    notify("Deleted"+(conn?" → Sheet synced":""),"success");setDelConfirm(null);
+  };
+
+  // Convert LOS to Invoice
+  const convertLosToInv=(los)=>{
+    setMInv({
+      customerName:los.retailerName,customerGstin:los.retailerGstin||'',
+      customerAddress:los.retailerAddress||'',customerState:los.retailerState||'',
+      customerStateCode:los.retailerStateCode||'',customerPhone:los.retailerPhone||'',
+      invoiceDate:td(),items:(los.items||[]).map(it=>({...it,gstRate:it.gstRate||3})),
+      notes:'Converted from Line of Sale: '+los.losNumber,losRef:los.id
+    });
+    // Mark LOS as converted
+    setLos(p=>p.map(x=>x.id===los.id?{...x,status:'Sold'}:x));
+    setPage('invoices');
+  };
+
+  // Dashboard calculations
+  const overdueDCs=dcs.filter(d=>d.status!=='Received Back'&&daysDiff(d.date)>settings.dcLimit);
+  const unsettledLOS=lineOfSales.filter(l=>l.status==='On Approval'&&daysDiff(l.date)>settings.losLimit);
+  const todayLOS=lineOfSales.filter(l=>l.status==='On Approval'&&l.date===td());
+  const revenue=invoices.reduce((s,i)=>s+(+i.grandTotal||0),0);
+  const totalReceipts=receipts.reduce((s,r)=>s+(+r.amount||0),0);
+  const totalPayments=payments.reduce((s,p)=>s+(+p.amount||0),0);
+  const totalExpenses=expenses.reduce((s,e)=>s+(+e.total||+e.amount||0),0);
+
+  // ═══════════════════════════════════════
+  // NAVIGATION
+  // ═══════════════════════════════════════
+  const nav=[
+    {id:'dashboard',label:'Dashboard',icon:'home'},
+    {id:'customers',label:'Customers',icon:'users'},
+    {id:'products',label:'Products',icon:'box'},
+    {id:'invoices',label:'Tax Invoice',icon:'file'},
+    {id:'dc',label:'Delivery Challan',icon:'truck',badge:overdueDCs.length||null},
+    {id:'los',label:'Line of Sale',icon:'tag',badge:unsettledLOS.length||null},
+    {id:'receipts',label:'Receipts',icon:'wallet'},
+    {id:'payments',label:'Payments',icon:'dollar'},
+    {id:'expenses',label:'Expenses',icon:'down'},
+    {id:'salesreg',label:'Sales Register',icon:'list'},
+    {id:'settings',label:'Settings',icon:'gear'},
+  ];
+
+  // ═══════════════════════════════════════
+  // RENDER
+  // ═══════════════════════════════════════
+  return <div style={{display:'flex',minHeight:'100vh'}}>
+    {toast&&<Toast {...toast} onClose={()=>setToast(null)}/>}
+    <Confirm open={!!delConfirm} onClose={()=>setDelConfirm(null)} onOk={()=>doDelete(delConfirm?.type)} title="Delete?" msg={`Delete ${delConfirm?.label||'this item'}? This cannot be undone.`}/>
+
+    {/* MOBILE TOP BAR */}
+    <div className="top-bar no-print">
+      <button onClick={()=>setSideOpen(!sideOpen)} style={{background:'none',border:'none',color:'#e8d5a3',cursor:'pointer',padding:4}}><Ic name="menu" size={22}/></button>
+      <span className="top-bar-title">💎 Jewellery GST Pro</span>
+      {conn&&<div style={{width:8,height:8,borderRadius:'50%',background:'#27ae60'}}/>}
+      <button onClick={()=>window.open('https://ewaybillgst.gov.in','_blank')} style={{background:'none',border:'none',color:'#c4b89a',cursor:'pointer',padding:4}}><Ic name="globe" size={18}/></button>
+    </div>
+
+    {/* SIDEBAR OVERLAY (mobile) */}
+    <div className={`sidebar-overlay${sideOpen&&window.innerWidth<=768?' show':''}`} onClick={()=>setSideOpen(false)}/>
+
+    {/* SIDEBAR */}
+    <div className={`sidebar no-print${sideOpen?' open':''}`} style={{width:sideOpen?220:56,background:'linear-gradient(180deg,#3a2e1a 0%,#2a2010 100%)',transition:'width .2s',flexShrink:0,display:'flex',flexDirection:'column',overflow:'hidden'}}>
+      <div style={{padding:sideOpen?'12px 14px':'12px 10px',display:'flex',alignItems:'center',gap:8,borderBottom:'1px solid rgba(255,255,255,.06)'}}>
+        <button onClick={()=>setSideOpen(!sideOpen)} style={{background:'none',border:'none',color:'#c4b89a',cursor:'pointer',padding:3}}><Ic name="menu" size={20}/></button>
+        {sideOpen&&<span style={{fontWeight:700,fontSize:13.5,color:'#e8d5a3',whiteSpace:'nowrap'}}>💎 Jewellery GST Pro</span>}
+      </div>
+      <nav style={{flex:1,padding:'8px 6px',overflow:'auto',WebkitOverflowScrolling:'touch'}}>
+        {nav.map(n=><button key={n.id} onClick={()=>{setPage(n.id);setSearch('');if(window.innerWidth<=768)setSideOpen(false);}} style={{
+          width:'100%',display:'flex',alignItems:'center',gap:8,padding:sideOpen?'9px 12px':'9px',
+          borderRadius:7,border:'none',cursor:'pointer',marginBottom:2,minHeight:38,
+          background:page===n.id?'rgba(228,213,163,.15)':'transparent',
+          color:page===n.id?'#e8d5a3':'rgba(196,184,154,.55)',fontWeight:page===n.id?700:500,fontSize:13,
+          justifyContent:sideOpen?'flex-start':'center',whiteSpace:'nowrap',position:'relative'
+        }}>
+          <Ic name={n.icon} size={16}/>{sideOpen&&n.label}
+          {n.badge&&<span style={{position:sideOpen?'static':'absolute',top:2,right:2,background:'#c0392b',color:'#fff',fontSize:10,fontWeight:700,padding:'1px 5px',borderRadius:8,marginLeft:sideOpen?'auto':0}}>{n.badge}</span>}
+        </button>)}
+      </nav>
+      <div style={{padding:'8px '+(sideOpen?'14':'6')+'px',borderTop:'1px solid rgba(255,255,255,.06)'}}>
+        {sideOpen&&<div style={{fontSize:10.5,color:'rgba(196,184,154,.45)',display:'flex',alignItems:'center',gap:5,marginBottom:4}}>
+          <div style={{width:7,height:7,borderRadius:'50%',background:conn?'#27ae60':'#e74c3c'}}/>
+          {conn?'Sheet Synced':'Offline (Local)'}
+          {syncing&&<span style={{marginLeft:4}}>⟳</span>}
+          {lastSync&&<span style={{marginLeft:'auto',fontSize:9}}>{lastSync}</span>}
+        </div>}
+        {sideOpen&&<div style={{fontSize:10,color:'rgba(196,184,154,.3)'}}>v1.0 — Gold & Silver Mfg</div>}
+      </div>
+    </div>
+
+    {/* MAIN CONTENT */}
+    <div className="main-content" style={{flex:1,padding:'16px 20px',maxHeight:'100vh',overflow:'auto',WebkitOverflowScrolling:'touch'}}>
+
+      {/* ═══ DASHBOARD ═══ */}
+      {page==='dashboard'&&<div>
+        <h2 style={{fontSize:20,fontWeight:800,margin:'0 0 16px',color:'#3a2e1a'}}>Dashboard</h2>
+        
+        {/* Alerts */}
+        {(overdueDCs.length>0||unsettledLOS.length>0)&&<div style={{marginBottom:16}}>
+          {overdueDCs.length>0&&<div className="overdue-pulse" style={{padding:'10px 16px',background:'#fdeaea',border:'1px solid #f5c6cb',borderRadius:8,marginBottom:8,fontSize:13,color:'#721c24'}}>
+            🔴 <strong>{overdueDCs.length} Overdue DC(s)</strong> — sent more than {settings.dcLimit} days ago, not received back
+          </div>}
+          {unsettledLOS.length>0&&<div style={{padding:'10px 16px',background:'#fff3cd',border:'1px solid #ffc107',borderRadius:8,marginBottom:8,fontSize:13,color:'#856404'}}>
+            🟡 <strong>{unsettledLOS.length} Unsettled Line of Sale</strong> — not converted/returned within {settings.losLimit} day(s)
+          </div>}
+        </div>}
+
+        {/* Summary Cards */}
+        <div className="stat-grid" style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(190px,1fr))',gap:12,marginBottom:20}}>
+          {[{l:'Revenue',v:fC(revenue),icon:'up',bg:'#ecfdf5',cl:'#27ae60',n:invoices.length+' invoices'},
+            {l:'Receipts',v:fC(totalReceipts),icon:'wallet',bg:'#eff6ff',cl:'#2c3e50',n:receipts.length+' entries'},
+            {l:'Payments',v:fC(totalPayments),icon:'dollar',bg:'#fef9e7',cl:'#d4a017',n:payments.length+' entries'},
+            {l:'Expenses',v:fC(totalExpenses),icon:'down',bg:'#fdeaea',cl:'#c0392b',n:expenses.length+' entries'},
+            {l:'Open DCs',v:dcs.filter(d=>d.status!=='Received Back').length,icon:'truck',bg:'#f0e6d2',cl:'#6b4f1d',n:'of '+dcs.length+' total'},
+            {l:'Active LOS',v:lineOfSales.filter(l=>l.status==='On Approval').length,icon:'tag',bg:'#e8f0fe',cl:'#34495e',n:'of '+lineOfSales.length+' total'},
+          ].map(c=><div key={c.l} className="stat-card" style={{...S.card,padding:16}}>
+            <div style={{display:'flex',alignItems:'center',gap:6,marginBottom:6}}>
+              <div style={{width:32,height:32,borderRadius:7,background:c.bg,display:'flex',alignItems:'center',justifyContent:'center',color:c.cl,flexShrink:0}}><Ic name={c.icon} size={16}/></div>
+              <span style={{fontSize:12,fontWeight:600,color:'#8a7e6b'}}>{c.l}</span>
+            </div>
+            <div className="stat-val" style={{fontSize:19,fontWeight:800}}>{c.v}</div>
+            <div style={{fontSize:11,color:'#a09880',marginTop:1}}>{c.n}</div>
+          </div>)}
+        </div>
+
+        {/* Quick Actions */}
+        <div className="quick-actions" style={{display:'flex',gap:8,flexWrap:'wrap',marginBottom:20}}>
+          <button style={S.btnP} onClick={()=>{setMInv({});setPage('invoices');}}><Ic name="plus" size={15}/> New Invoice</button>
+          <button style={S.btnS} onClick={()=>{setMDc({});setPage('dc');}}><Ic name="truck" size={15}/> New DC</button>
+          <button style={S.btnS} onClick={()=>{setMLos({});setPage('los');}}><Ic name="tag" size={15}/> New Line of Sale</button>
+          {conn&&<button style={S.btnS} onClick={fullSync} disabled={syncing}><Ic name="sync" size={15}/> {syncing?'Syncing...':'Sync Now'}</button>}
+          <button style={{...S.btnS,marginLeft:'auto'}} onClick={()=>window.open('https://ewaybillgst.gov.in','_blank')}><Ic name="globe" size={15}/> e-Way Bill Portal</button>
+        </div>
+
+        {/* Recent Invoices */}
+        <div style={{...S.card,padding:16}}>
+          <h3 style={{fontSize:14,fontWeight:700,margin:'0 0 10px',color:'#3a2e1a'}}>Recent Invoices</h3>
+          {invoices.slice(-5).reverse().map(i=><div key={i.id} className="row-hover" style={{display:'flex',justifyContent:'space-between',padding:'6px 0',borderBottom:'1px solid #f3efe8',fontSize:13}}>
+            <span style={{fontWeight:600,fontFamily:'monospace'}}>{i.invoiceNumber}</span>
+            <span style={{color:'#6b6358'}}>{i.customerName}</span>
+            <span style={{fontWeight:700,color:'#27ae60'}}>{fC(i.grandTotal)}</span>
+          </div>)}
+          {!invoices.length&&<p style={{color:'#a09880',fontSize:13}}>No invoices yet</p>}
+        </div>
+      </div>}
+
+      {/* ═══ CUSTOMERS ═══ */}
+      {page==='customers'&&<DataPage title="Customers" data={customers} search={search} setSearch={setSearch}
+        onAdd={()=>setMCust({})} onEdit={setMCust} onDel={(id)=>setDelConfirm({id,type:'customer',label:'this customer'})}
+        cols={[{k:'name',l:'Name',bold:1},{k:'type',l:'Type'},{k:'gstin',l:'GSTIN',code:1},{k:'city',l:'City'},{k:'phone',l:'Phone'}]}/>}
+
+      {/* ═══ PRODUCTS ═══ */}
+      {page==='products'&&<DataPage title="Products" data={products} search={search} setSearch={setSearch}
+        onAdd={()=>setMProd({})} onEdit={setMProd} onDel={(id)=>setDelConfirm({id,type:'product',label:'this product'})}
+        cols={[{k:'name',l:'Item Name',bold:1},{k:'hsn',l:'HSN',code:1},{k:'defaultPurity',l:'Purity'},{k:'makingType',l:'Making Type'},{k:'defaultGst',l:'GST%'}]}/>}
+
+      {/* ═══ TAX INVOICES ═══ */}
+      {page==='invoices'&&<DataPage title="Tax Invoices" data={invoices} search={search} setSearch={setSearch} reverse
+        onAdd={()=>setMInv({})} onEdit={setMInv} onDel={(id)=>setDelConfirm({id,type:'invoice',label:'this invoice'})}
+        onView={(inv)=>setMView({type:'invoice',data:inv})}
+        cols={[{k:'invoiceNumber',l:'Invoice #',bold:1,code:1},{k:'invoiceDate',l:'Date',fmt:fD},{k:'customerName',l:'Customer'},{k:'grandTotal',l:'Total',fmt:fC}]}/>}
+
+      {/* ═══ DELIVERY CHALLAN ═══ */}
+      {page==='dc'&&<DataPage title="Delivery Challan — Jobwork" data={dcs} search={search} setSearch={setSearch} reverse
+        onAdd={()=>setMDc({})} onEdit={setMDc} onDel={(id)=>setDelConfirm({id,type:'dc',label:'this DC'})}
+        onView={(dc)=>setMView({type:'dc',data:dc})}
+        cols={[{k:'dcNumber',l:'DC #',bold:1,code:1},{k:'date',l:'Date',fmt:fD},{k:'jobworkerName',l:'Jobworker'},
+          {k:'totalWeight',l:'Weight',fmt:fW},{k:'purpose',l:'Purpose'},
+          {k:'status',l:'Status',fmt:(v)=>{const d=v;return d==='Received Back'?'✅ Received':d==='Overdue'?'🔴 Overdue':'🟡 Sent'}}]}
+        addLabel="New DC" extraInfo={<div style={{fontSize:12,color:'#856404',background:'#fff3cd',padding:'6px 12px',borderRadius:6,marginBottom:12}}>⏰ DC limit: {settings.dcLimit} days. Items must be received back within this period.</div>}/>}
+
+      {/* ═══ LINE OF SALE ═══ */}
+      {page==='los'&&<DataPage title="Line of Sale — Finished Jewels" data={lineOfSales} search={search} setSearch={setSearch} reverse
+        onAdd={()=>setMLos({})} onEdit={setMLos} onDel={(id)=>setDelConfirm({id,type:'los',label:'this line of sale'})}
+        onView={(los)=>setMView({type:'los',data:los})}
+        cols={[{k:'losNumber',l:'LOS #',bold:1,code:1},{k:'date',l:'Date',fmt:fD},{k:'retailerName',l:'Retailer'},{k:'city',l:'City'},
+          {k:'totalWeight',l:'Weight',fmt:fW},{k:'totalValue',l:'Value',fmt:fC},
+          {k:'status',l:'Status',fmt:(v)=>v==='Sold'?'✅ Sold':v==='Returned'?'↩ Returned':'🟡 On Approval'}]}
+        addLabel="New Line of Sale" extraAction={(item)=>item.status==='On Approval'?[
+          {label:'→ Invoice',style:S.btnP,onClick:()=>convertLosToInv(item)},
+          {label:'↩ Return',style:S.btnS,onClick:()=>{setLos(p=>p.map(x=>x.id===item.id?{...x,status:'Returned'}:x));notify("Marked as Returned","success");}}
+        ]:null}
+        extraInfo={<div style={{fontSize:12,color:'#856404',background:'#fff3cd',padding:'6px 12px',borderRadius:6,marginBottom:12}}>⏰ Line of Sale limit: {settings.losLimit} day(s). Must be settled (sold/returned) within this period.</div>}/>}
+
+      {/* ═══ RECEIPTS ═══ */}
+      {page==='receipts'&&<DataPage title="Receipt Vouchers" data={receipts} search={search} setSearch={setSearch} reverse
+        onAdd={()=>setMRec({})} onEdit={setMRec} onDel={(id)=>setDelConfirm({id,type:'receipt',label:'this receipt'})}
+        onView={(r)=>setMView({type:'receipt',data:r})}
+        cols={[{k:'receiptNo',l:'Receipt #',bold:1,code:1},{k:'date',l:'Date',fmt:fD},{k:'receivedFrom',l:'Received From'},{k:'amount',l:'Amount',fmt:fC},{k:'mode',l:'Mode'}]}/>}
+
+      {/* ═══ PAYMENTS ═══ */}
+      {page==='payments'&&<DataPage title="Payment Vouchers" data={payments} search={search} setSearch={setSearch} reverse
+        onAdd={()=>setMPay({})} onEdit={setMPay} onDel={(id)=>setDelConfirm({id,type:'payment',label:'this payment'})}
+        onView={(p)=>setMView({type:'payment',data:p})}
+        cols={[{k:'paymentNo',l:'Payment #',bold:1,code:1},{k:'date',l:'Date',fmt:fD},{k:'paidTo',l:'Paid To'},{k:'amount',l:'Amount',fmt:fC},{k:'mode',l:'Mode'}]}/>}
+
+      {/* ═══ EXPENSES ═══ */}
+      {page==='expenses'&&<DataPage title="Expenses" data={expenses} search={search} setSearch={setSearch} reverse
+        onAdd={()=>setMExp({})} onEdit={setMExp} onDel={(id)=>setDelConfirm({id,type:'expense',label:'this expense'})}
+        onView={(e)=>setMView({type:'expense',data:e})}
+        cols={[{k:'voucherNo',l:'Voucher #',code:1},{k:'date',l:'Date',fmt:fD},{k:'category',l:'Category'},{k:'vendor',l:'Vendor'},{k:'amount',l:'Amount',fmt:fC}]}/>}
+
+      {/* ═══ SALES REGISTER ═══ */}
+      {page==='salesreg'&&<SalesRegister invoices={invoices} company={company} logo={logo}/>}
+
+      {/* ═══ SETTINGS ═══ */}
+      {page==='settings'&&<SettingsPage company={company} setCo={setCo} logo={logo} setLogo={setLogo}
+        settings={settings} setSettings={setSettings} url={url} setUrl={setUrl} sid={sid} setSid={setSid}
+        conn={conn} syncing={syncing} connect={connect} fullSync={fullSync} backup={backup} lastSync={lastSync} notify={notify}/>}
+
+    </div>
+
+    {/* ═══ MODALS ═══ */}
+    <Modal open={!!mCust} onClose={()=>setMCust(null)} title={mCust?.id?"Edit Customer":"New Customer"}>
+      {mCust&&<CustForm data={mCust} onSave={saveCust} onClose={()=>setMCust(null)} notify={notify}/>}
+    </Modal>
+    <Modal open={!!mProd} onClose={()=>setMProd(null)} title={mProd?.id?"Edit Product":"New Product"}>
+      {mProd&&<ProdForm data={mProd} onSave={saveProd} onClose={()=>setMProd(null)} notify={notify} settings={settings}/>}
+    </Modal>
+    <Modal open={!!mInv} onClose={()=>setMInv(null)} title={mInv?.id?"Edit Invoice":"New Tax Invoice"} wide>
+      {mInv&&<InvForm data={mInv} onSave={saveInvoice} onClose={()=>setMInv(null)} customers={customers} products={products} company={company} notify={notify} settings={settings} count={invoices.length}/>}
+    </Modal>
+    <Modal open={!!mDc} onClose={()=>setMDc(null)} title={mDc?.id?"Edit DC":"New Delivery Challan"} wide>
+      {mDc&&<DCForm data={mDc} onSave={saveDC} onClose={()=>setMDc(null)} customers={customers.filter(c=>c.type==='Jobworker')} notify={notify} settings={settings} count={dcs.length}/>}
+    </Modal>
+    <Modal open={!!mLos} onClose={()=>setMLos(null)} title={mLos?.id?"Edit Line of Sale":"New Line of Sale"} wide>
+      {mLos&&<LOSForm data={mLos} onSave={saveLOS} onClose={()=>setMLos(null)} customers={customers.filter(c=>c.type==='Retailer'||!c.type)} products={products} notify={notify} settings={settings} count={lineOfSales.length}/>}
+    </Modal>
+    <Modal open={!!mExp} onClose={()=>setMExp(null)} title={mExp?.id?"Edit Expense":"New Expense"}>
+      {mExp&&<ExpForm data={mExp} onSave={saveExpense} onClose={()=>setMExp(null)}/>}
+    </Modal>
+    <Modal open={!!mRec} onClose={()=>setMRec(null)} title={mRec?.id?"Edit Receipt":"New Receipt Voucher"}>
+      {mRec&&<RecPayForm data={mRec} onSave={saveReceipt} onClose={()=>setMRec(null)} type="receipt" count={receipts.length}/>}
+    </Modal>
+    <Modal open={!!mPay} onClose={()=>setMPay(null)} title={mPay?.id?"Edit Payment":"New Payment Voucher"}>
+      {mPay&&<RecPayForm data={mPay} onSave={savePayment} onClose={()=>setMPay(null)} type="payment" count={payments.length}/>}
+    </Modal>
+    <Modal open={!!mView} onClose={()=>setMView(null)} title={mView?.type==='invoice'?'Invoice Preview':mView?.type==='dc'?'DC Preview':mView?.type==='los'?'Line of Sale Preview':mView?.type==='receipt'?'Receipt Voucher':mView?.type==='payment'?'Payment Voucher':'Expense Voucher'} wide>
+      {mView&&<DocView type={mView.type} data={mView.data} company={company} logo={logo}/>}
+    </Modal>
+  </div>;
+}
+
+// ═══════════════════════════════════════
+// DATA PAGE (Reusable table)
+// ═══════════════════════════════════════
+function DataPage({title,data,cols,search,setSearch,onAdd,onEdit,onDel,onView,addLabel="Add",reverse,extraAction,extraInfo}){
+  const filtered=data.filter(d=>!search||Object.values(d).some(v=>String(v).toLowerCase().includes(search.toLowerCase())));
+  const rows=reverse?[...filtered].reverse():filtered;
+  return <div>
+    <div className="page-header" style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:14,flexWrap:'wrap',gap:10}}>
+      <h2 style={{fontSize:20,fontWeight:800,margin:0,color:'#3a2e1a'}}>{title} <span style={{fontSize:13,fontWeight:400,color:'#a09880'}}>({data.length})</span></h2>
+      <div className="header-actions" style={{display:'flex',gap:6,flexWrap:'wrap'}}>
+        <div style={{position:'relative',flex:'1 1 140px'}}>
+          <div style={{position:'absolute',left:10,top:10,color:'#a09880'}}><Ic name="search" size={15}/></div>
+          <input style={{...S.inp,paddingLeft:32,width:'100%',fontSize:13}} placeholder="Search..." value={search} onChange={e=>setSearch(e.target.value)}/>
+        </div>
+        <button style={{...S.btnP,whiteSpace:'nowrap'}} onClick={onAdd}><Ic name="plus" size={15}/> {addLabel}</button>
+      </div>
+    </div>
+    {extraInfo}
+    <div className="table-wrap" style={{...S.card,overflowX:'auto',WebkitOverflowScrolling:'touch'}}>
+      <table style={{width:'100%',borderCollapse:'collapse',minWidth:600}}>
+        <thead><tr>{cols.map(c=><th key={c.k} style={S.th}>{c.l}</th>)}<th style={S.th}>Actions</th></tr></thead>
+        <tbody>
+          {rows.map(d=><tr key={d.id} className="row-hover">
+            {cols.map(c=><td key={c.k} style={{...S.td,fontWeight:c.bold?600:400}}>
+              {c.code?<code style={{background:'#f5f0e8',padding:'1px 5px',borderRadius:3,fontSize:12}}>{d[c.k]||'—'}</code>:
+              (c.fmt?c.fmt(d[c.k]):(d[c.k]||'—'))}
+            </td>)}
+            <td style={S.td}>
+              <div style={{display:'flex',gap:3,flexWrap:'wrap'}}>
+                {onView&&<button style={{...S.btnS,...S.btnSm}} onClick={()=>onView(d)} title="View/Print"><Ic name="eye" size={13}/></button>}
+                <button style={{...S.btnS,...S.btnSm}} onClick={()=>onEdit(d)} title="Edit"><Ic name="edit" size={13}/></button>
+                <button style={{...S.btnD,...S.btnSm}} onClick={()=>onDel(d.id)} title="Delete"><Ic name="trash" size={13}/></button>
+                {extraAction&&extraAction(d)&&extraAction(d).map((a,i)=><button key={i} style={{...a.style,...S.btnSm}} onClick={a.onClick}>{a.label}</button>)}
+              </div>
+            </td>
+          </tr>)}
+          {!rows.length&&<tr><td colSpan={cols.length+1} style={{...S.td,textAlign:'center',color:'#a09880',padding:36}}>No records found</td></tr>}
+        </tbody>
+      </table>
+    </div>
+  </div>;
+}
+
+// ═══════════════════════════════════════
+// FORMS
+// ═══════════════════════════════════════
+function CustForm({data,onSave,onClose,notify}){
+  const[f,set]=useState({name:'',type:'Retailer',gstin:'',address:'',city:'',state:'Tamil Nadu',stateCode:'33',phone:'',email:'',...data});
+  return <div>
+    <div className="form-grid-2" style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}}>
+      <div style={{gridColumn:'1/-1'}}><label style={S.lbl}>Name *</label><input style={S.inp} value={f.name} onChange={e=>set(p=>({...p,name:e.target.value}))}/></div>
+      <div><label style={S.lbl}>Type *</label><select style={S.inp} value={f.type} onChange={e=>set(p=>({...p,type:e.target.value}))}><option>Retailer</option><option>Jobworker</option><option>Wholesaler</option><option>Other</option></select></div>
+      <div><label style={S.lbl}>GSTIN</label><input style={{...S.inp,textTransform:'uppercase',fontFamily:'monospace'}} value={f.gstin} maxLength={15} onChange={e=>set(p=>({...p,gstin:e.target.value.toUpperCase()}))}/></div>
+      <div><label style={S.lbl}>City</label><input style={S.inp} value={f.city} onChange={e=>set(p=>({...p,city:e.target.value}))}/></div>
+      <div><label style={S.lbl}>Phone</label><input style={S.inp} value={f.phone} onChange={e=>set(p=>({...p,phone:e.target.value}))}/></div>
+      <div style={{gridColumn:'1/-1'}}><label style={S.lbl}>Address</label><input style={S.inp} value={f.address} onChange={e=>set(p=>({...p,address:e.target.value}))}/></div>
+      <div><label style={S.lbl}>State</label><select style={S.inp} value={f.state} onChange={e=>{const v=e.target.value;const s=STATES.find(x=>x.n===v);set(p=>({...p,state:v,stateCode:s?.c||''}));}}><option value="">Select</option>{STATES.map(s=><option key={s.c} value={s.n}>{s.n} ({s.c})</option>)}</select></div>
+      <div><label style={S.lbl}>Email</label><input style={S.inp} value={f.email} onChange={e=>set(p=>({...p,email:e.target.value}))}/></div>
+    </div>
+    <div style={{display:'flex',gap:10,justifyContent:'flex-end',marginTop:16}}>
+      <button style={S.btnS} onClick={onClose}>Cancel</button>
+      <button style={S.btnP} onClick={()=>{if(!f.name){notify("Name required","warning");return;}onSave(f);}}><Ic name="save" size={15}/> Save</button>
+    </div>
+  </div>;
+}
+
+function ProdForm({data,onSave,onClose,notify,settings}){
+  const[f,set]=useState({name:'',hsn:'7113',defaultPurity:settings.defaultPurity||'916',makingType:'per_gm',makingCharge:0,defaultGst:settings.defaultGst||3,description:'',...data});
+  return <div>
+    <div className="form-grid-2" style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}}>
+      <div style={{gridColumn:'1/-1'}}><label style={S.lbl}>Item Name *</label><input style={S.inp} placeholder="e.g. Chain, Bracelet, Jimiki" value={f.name} onChange={e=>set(p=>({...p,name:e.target.value}))}/></div>
+      <div><label style={S.lbl}>HSN Code</label><select style={S.inp} value={f.hsn} onChange={e=>set(p=>({...p,hsn:e.target.value}))}>{HSN_CODES.map(h=><option key={h} value={h}>{h}</option>)}<option value="">Other</option></select></div>
+      <div><label style={S.lbl}>Default Purity</label><select style={S.inp} value={f.defaultPurity} onChange={e=>set(p=>({...p,defaultPurity:e.target.value}))}>{PURITIES.map(p=><option key={p.v} value={p.v}>{p.l}</option>)}</select></div>
+      <div><label style={S.lbl}>Making Charge Type</label><select style={S.inp} value={f.makingType} onChange={e=>set(p=>({...p,makingType:e.target.value}))}>{MAKING_TYPES.map(m=><option key={m.v} value={m.v}>{m.l}</option>)}</select></div>
+      <div><label style={S.lbl}>Default Making Charge (₹)</label><input style={S.inp} type="number" value={f.makingCharge} onChange={e=>set(p=>({...p,makingCharge:+e.target.value}))}/></div>
+      <div><label style={S.lbl}>Default GST %</label><select style={S.inp} value={f.defaultGst} onChange={e=>set(p=>({...p,defaultGst:+e.target.value}))}>{GST_RATES.map(r=><option key={r} value={r}>{r}%</option>)}</select></div>
+      <div style={{gridColumn:'1/-1'}}><label style={S.lbl}>Description</label><input style={S.inp} value={f.description} onChange={e=>set(p=>({...p,description:e.target.value}))}/></div>
+    </div>
+    <div style={{display:'flex',gap:10,justifyContent:'flex-end',marginTop:16}}>
+      <button style={S.btnS} onClick={onClose}>Cancel</button>
+      <button style={S.btnP} onClick={()=>{if(!f.name){notify("Name required","warning");return;}onSave(f);}}><Ic name="save" size={15}/> Save</button>
+    </div>
+  </div>;
+}
+
+// ═══════════════════════════════════════
+// JEWELLERY INVOICE FORM
+// ═══════════════════════════════════════
+function InvForm({data,onSave,onClose,customers,products,company,notify,settings,count}){
+  const defItem={productName:'',hsn:'7113',pcs:1,grossWt:0,netWt:0,purity:settings.defaultPurity||'916',ratePerGm:0,makingType:'per_gm',makingCharge:0,stoneCharges:0,gstRate:settings.defaultGst||3};
+  const[f,set]=useState({invoiceNumber:'',invoiceDate:td(),dueDate:'',invoiceType:'B2B',customerName:'',customerGstin:'',customerAddress:'',customerState:'',customerStateCode:'',customerPhone:'',items:[{...defItem}],notes:'',...data});
+
+  const addItem=()=>set(p=>({...p,items:[...p.items,{...defItem}]}));
+  const updItem=(i,k,v)=>set(p=>({...p,items:p.items.map((it,j)=>{
+    if(j!==i)return it;
+    const updated={...it,[k]:v};
+    // Auto-fill from product master
+    if(k==='productName'){
+      const prod=products.find(x=>x.name===v);
+      if(prod){updated.hsn=prod.hsn||'7113';updated.purity=prod.defaultPurity||settings.defaultPurity;updated.makingType=prod.makingType||'per_gm';updated.makingCharge=prod.makingCharge||0;updated.gstRate=prod.defaultGst||3;}
+    }
+    return updated;
+  })}));
+  const remItem=(i)=>set(p=>({...p,items:p.items.filter((_,j)=>j!==i)}));
+
+  // Select customer
+  const selectCust=(c)=>{
+    set(p=>({...p,customerName:c.name,customerGstin:c.gstin||'',customerAddress:c.address||'',customerState:c.state||'',customerStateCode:c.stateCode||'',customerPhone:c.phone||'',invoiceType:c.gstin?'B2B':'B2CS'}));
+  };
+
+  // Totals
+  const calcItem=(it)=>{
+    const metalVal=(it.netWt||0)*(it.ratePerGm||0);
+    const makingVal=it.makingType==='per_gm'?(it.makingCharge||0)*(it.netWt||0):it.makingType==='per_pc'?(it.makingCharge||0)*(it.pcs||1):(it.makingCharge||0);
+    const taxable=metalVal+makingVal+(it.stoneCharges||0);
+    const gst=taxable*(it.gstRate||3)/100;
+    return {metalVal,makingVal,taxable,gst,total:taxable+gst};
+  };
+
+  const totals=f.items.reduce((acc,it)=>{const c=calcItem(it);return{tax:acc.tax+c.taxable,gst:acc.gst+c.gst,wt:acc.wt+(it.netWt||0)};},{tax:0,gst:0,wt:0});
+  const isIGST=f.customerStateCode&&company.stateCode&&f.customerStateCode!==company.stateCode;
+  const grand=totals.tax+totals.gst;
+
+  const doSave=()=>{
+    if(!f.customerName){notify("Customer name required","warning");return;}
+    if(!f.items.length||!f.items[0].productName){notify("At least one item required","warning");return;}
+    onSave({...f,invoiceNumber:f.invoiceNumber||'INV-'+String(count+1).padStart(4,'0')});
+  };
+
+  return <div>
+    {/* Header */}
+    <div className="form-grid-3" style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:10,marginBottom:16}}>
+      <div><label style={S.lbl}>Invoice #</label><input style={{...S.inp,fontFamily:'monospace'}} value={f.invoiceNumber} placeholder={'INV-'+String(count+1).padStart(4,'0')} onChange={e=>set(p=>({...p,invoiceNumber:e.target.value}))}/></div>
+      <div><label style={S.lbl}>Date</label><input style={S.inp} type="date" value={f.invoiceDate} onChange={e=>set(p=>({...p,invoiceDate:e.target.value}))}/></div>
+      <div><label style={S.lbl}>Type</label><select style={S.inp} value={f.invoiceType} onChange={e=>set(p=>({...p,invoiceType:e.target.value}))}><option value="B2B">B2B</option><option value="B2CS">B2CS</option></select></div>
+    </div>
+
+    {/* Customer */}
+    <div style={{padding:14,background:'#faf8f4',borderRadius:10,border:'1px solid #e8e0d0',marginBottom:16}}>
+      <h4 style={{margin:'0 0 10px',fontSize:13,fontWeight:700,color:'#5a5040'}}>Customer Details</h4>
+      <div className="form-grid-2" style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>
+        <div><label style={S.lbl}>Customer Name *</label>
+          <select style={S.inp} value={f.customerName} onChange={e=>{const c=customers.find(x=>x.name===e.target.value);if(c)selectCust(c);else set(p=>({...p,customerName:e.target.value}));}}>
+            <option value="">Select or type...</option>{customers.map(c=><option key={c.id} value={c.name}>{c.name} {c.city?'('+c.city+')':''}</option>)}
+          </select>
+        </div>
+        <div><label style={S.lbl}>GSTIN</label><input style={{...S.inp,textTransform:'uppercase',fontFamily:'monospace'}} value={f.customerGstin} maxLength={15} onChange={e=>set(p=>({...p,customerGstin:e.target.value.toUpperCase()}))}/></div>
+        <div><label style={S.lbl}>Address</label><input style={S.inp} value={f.customerAddress} onChange={e=>set(p=>({...p,customerAddress:e.target.value}))}/></div>
+        <div><label style={S.lbl}>Phone</label><input style={S.inp} value={f.customerPhone} onChange={e=>set(p=>({...p,customerPhone:e.target.value}))}/></div>
+        <div><label style={S.lbl}>State</label><select style={S.inp} value={f.customerState} onChange={e=>{const v=e.target.value;const s=STATES.find(x=>x.n===v);set(p=>({...p,customerState:v,customerStateCode:s?.c||''}));}}><option value="">Select</option>{STATES.map(s=><option key={s.c} value={s.n}>{s.n} ({s.c})</option>)}</select></div>
+        <div><label style={S.lbl}>State Code</label><input readOnly style={{...S.inp,background:'#f0ead8',fontFamily:'monospace',fontWeight:700}} value={f.customerStateCode||'—'}/></div>
+      </div>
+    </div>
+
+    {/* Line Items — Jewellery */}
+    <div style={{marginBottom:16}}>
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:8}}>
+        <h4 style={{margin:0,fontSize:13,fontWeight:700,color:'#5a5040'}}>Line Items — Jewellery</h4>
+        <button style={{...S.btnS,...S.btnSm}} onClick={addItem}><Ic name="plus" size={13}/> Add Item</button>
+      </div>
+      {f.items.map((it,i)=>{const c=calcItem(it);return <div key={i} style={{padding:10,background:'#faf8f4',borderRadius:8,border:'1px solid #e8e0d0',marginBottom:6}}>
+        <div className="item-grid-6" style={{display:'grid',gridTemplateColumns:'2fr 1fr 1fr 1fr 1fr 1fr',gap:6,alignItems:'end'}}>
+          <div><label style={{...S.lbl,fontSize:10.5}}>Item</label><select style={{...S.inp,fontSize:12.5}} value={it.productName} onChange={e=>updItem(i,'productName',e.target.value)}><option value="">Select...</option>{products.map(p=><option key={p.id} value={p.name}>{p.name}</option>)}</select></div>
+          <div><label style={{...S.lbl,fontSize:10.5}}>HSN</label><input style={{...S.inp,fontSize:12.5}} value={it.hsn||''} onChange={e=>updItem(i,'hsn',e.target.value)}/></div>
+          <div><label style={{...S.lbl,fontSize:10.5}}>Pcs</label><input style={{...S.inp,fontSize:12.5}} type="number" min="1" value={it.pcs} onChange={e=>updItem(i,'pcs',+e.target.value)}/></div>
+          <div><label style={{...S.lbl,fontSize:10.5}}>Gross Wt (gm)</label><input style={{...S.inp,fontSize:12.5}} type="number" step="0.001" value={it.grossWt} onChange={e=>updItem(i,'grossWt',+e.target.value)}/></div>
+          <div><label style={{...S.lbl,fontSize:10.5}}>Net Wt (gm)</label><input style={{...S.inp,fontSize:12.5}} type="number" step="0.001" value={it.netWt} onChange={e=>updItem(i,'netWt',+e.target.value)}/></div>
+          <div><label style={{...S.lbl,fontSize:10.5}}>Purity</label><select style={{...S.inp,fontSize:12.5}} value={it.purity} onChange={e=>updItem(i,'purity',e.target.value)}>{PURITIES.map(p=><option key={p.v} value={p.v}>{p.l}</option>)}</select></div>
+        </div>
+        <div className="item-grid-inner" style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr 1fr 1fr auto',gap:6,marginTop:6,alignItems:'end'}}>
+          <div><label style={{...S.lbl,fontSize:10.5}}>Rate/gm (₹)</label><input style={{...S.inp,fontSize:12.5}} type="number" value={it.ratePerGm} onChange={e=>updItem(i,'ratePerGm',+e.target.value)}/></div>
+          <div><label style={{...S.lbl,fontSize:10.5}}>Making Type</label><select style={{...S.inp,fontSize:12.5}} value={it.makingType} onChange={e=>updItem(i,'makingType',e.target.value)}>{MAKING_TYPES.map(m=><option key={m.v} value={m.v}>{m.l}</option>)}</select></div>
+          <div><label style={{...S.lbl,fontSize:10.5}}>Making (₹)</label><input style={{...S.inp,fontSize:12.5}} type="number" value={it.makingCharge} onChange={e=>updItem(i,'makingCharge',+e.target.value)}/></div>
+          <div><label style={{...S.lbl,fontSize:10.5}}>Stone/Other (₹)</label><input style={{...S.inp,fontSize:12.5}} type="number" value={it.stoneCharges} onChange={e=>updItem(i,'stoneCharges',+e.target.value)}/></div>
+          <div><label style={{...S.lbl,fontSize:10.5}}>GST%</label><select style={{...S.inp,fontSize:12.5}} value={it.gstRate} onChange={e=>updItem(i,'gstRate',+e.target.value)}>{GST_RATES.map(r=><option key={r} value={r}>{r}%</option>)}</select></div>
+          {f.items.length>1&&<button style={{background:'none',border:'none',cursor:'pointer',color:'#c0392b',padding:4}} onClick={()=>remItem(i)}><Ic name="x" size={15}/></button>}
+        </div>
+        <div style={{marginTop:4,fontSize:11.5,color:'#6b6358',display:'flex',gap:16}}>
+          <span>Metal: {fC(c.metalVal)}</span><span>Making: {fC(c.makingVal)}</span><span>Taxable: <strong>{fC(c.taxable)}</strong></span><span>GST: {fC(c.gst)}</span><span style={{fontWeight:700,color:'#3a2e1a'}}>Total: {fC(c.total)}</span>
+        </div>
+      </div>;})}
+    </div>
+
+    {/* Totals */}
+    <div style={{padding:14,background:'#3a2e1a',borderRadius:10,color:'#e8d5a3',marginBottom:16}}>
+      <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:8,padding:'5px 10px',background:'rgba(255,255,255,.06)',borderRadius:6,fontSize:12}}>
+        <span>{isIGST?'↔ Inter-State → IGST':'✓ Intra-State → CGST + SGST'}</span>
+        <span style={{marginLeft:'auto',fontSize:10.5,opacity:.6}}>Net Wt: {fW(totals.wt)}</span>
+      </div>
+      <div style={{display:'flex',justifyContent:'space-between',padding:'3px 0',fontSize:13}}><span>Taxable</span><span style={{fontWeight:600}}>{fC(totals.tax)}</span></div>
+      {!isIGST&&<><div style={{display:'flex',justifyContent:'space-between',padding:'3px 0',fontSize:13}}><span>CGST</span><span>{fC(totals.gst/2)}</span></div>
+        <div style={{display:'flex',justifyContent:'space-between',padding:'3px 0',fontSize:13}}><span>SGST</span><span>{fC(totals.gst/2)}</span></div></>}
+      {isIGST&&<div style={{display:'flex',justifyContent:'space-between',padding:'3px 0',fontSize:13}}><span>IGST</span><span>{fC(totals.gst)}</span></div>}
+      <div style={{display:'flex',justifyContent:'space-between',padding:'7px 0 0',fontSize:17,fontWeight:800,borderTop:'1px solid rgba(255,255,255,.15)',marginTop:6}}><span>Grand Total</span><span>{fC(grand)}</span></div>
+      <div style={{fontSize:11,opacity:.6,marginTop:3}}>{numWords(grand)}</div>
+    </div>
+
+    <div><label style={S.lbl}>Notes</label><textarea style={{...S.inp,minHeight:40}} value={f.notes||''} onChange={e=>set(p=>({...p,notes:e.target.value}))}/></div>
+    <div style={{display:'flex',gap:10,justifyContent:'flex-end',marginTop:16}}>
+      <button style={S.btnS} onClick={onClose}>Cancel</button>
+      <button style={S.btnP} onClick={doSave}><Ic name="save" size={15}/> {data?.id?'Update':'Create'} Invoice</button>
+    </div>
+  </div>;
+}
+
+// ═══════════════════════════════════════
+// DC FORM (Jobwork / Finishing)
+// ═══════════════════════════════════════
+function DCForm({data,onSave,onClose,customers,notify,settings,count}){
+  const defItem={description:'',grossWt:0,netWt:0,purity:settings.defaultPurity||'916',pcs:0};
+  const[f,set]=useState({dcNumber:'',date:td(),jobworkerName:'',jobworkerAddress:'',purpose:'Polishing',status:'Sent',items:[{...defItem}],notes:'',...data});
+
+  const addItem=()=>set(p=>({...p,items:[...p.items,{...defItem}]}));
+  const updItem=(i,k,v)=>set(p=>({...p,items:p.items.map((it,j)=>j===i?{...it,[k]:v}:it)}));
+  const remItem=(i)=>set(p=>({...p,items:p.items.filter((_,j)=>j!==i)}));
+
+  const totalWt=f.items.reduce((s,it)=>s+(it.netWt||0),0);
+
+  return <div>
+    <div className="form-grid-3" style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:10,marginBottom:14}}>
+      <div><label style={S.lbl}>DC #</label><input style={{...S.inp,fontFamily:'monospace'}} value={f.dcNumber} placeholder={'DC-'+String(count+1).padStart(4,'0')} onChange={e=>set(p=>({...p,dcNumber:e.target.value}))}/></div>
+      <div><label style={S.lbl}>Date</label><input style={S.inp} type="date" value={f.date} onChange={e=>set(p=>({...p,date:e.target.value}))}/></div>
+      <div><label style={S.lbl}>Due Date</label><input style={{...S.inp,background:'#fef9e7'}} type="date" value={f.dueDate||addDays(f.date,settings.dcLimit)} onChange={e=>set(p=>({...p,dueDate:e.target.value}))}/></div>
+    </div>
+    <div className="form-grid-2" style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10,marginBottom:14}}>
+      <div><label style={S.lbl}>Jobworker *</label><select style={S.inp} value={f.jobworkerName} onChange={e=>{const c=customers.find(x=>x.name===e.target.value);set(p=>({...p,jobworkerName:e.target.value,jobworkerAddress:c?.address||''}));}}>
+        <option value="">Select...</option>{customers.map(c=><option key={c.id} value={c.name}>{c.name}</option>)}
+      </select></div>
+      <div><label style={S.lbl}>Purpose</label><select style={S.inp} value={f.purpose} onChange={e=>set(p=>({...p,purpose:e.target.value}))}>{DC_PURPOSES.map(p=><option key={p}>{p}</option>)}</select></div>
+      <div><label style={S.lbl}>Status</label><select style={S.inp} value={f.status} onChange={e=>set(p=>({...p,status:e.target.value}))}><option>Sent</option><option>Received Back</option></select></div>
+    </div>
+
+    <div style={{marginBottom:14}}>
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:6}}>
+        <h4 style={{margin:0,fontSize:13,fontWeight:700,color:'#5a5040'}}>Items</h4>
+        <button style={{...S.btnS,...S.btnSm}} onClick={addItem}><Ic name="plus" size={13}/> Add</button>
+      </div>
+      {f.items.map((it,i)=><div key={i} className="item-grid-6" style={{display:'grid',gridTemplateColumns:'2fr 1fr 1fr 1fr 1fr auto',gap:6,marginBottom:4,alignItems:'end',padding:8,background:'#faf8f4',borderRadius:8,border:'1px solid #e8e0d0'}}>
+        <div><label style={{...S.lbl,fontSize:10.5}}>Description</label><input style={{...S.inp,fontSize:12.5}} placeholder="e.g. Gold Chains for polishing" value={it.description} onChange={e=>updItem(i,'description',e.target.value)}/></div>
+        <div><label style={{...S.lbl,fontSize:10.5}}>Pcs</label><input style={{...S.inp,fontSize:12.5}} type="number" value={it.pcs} onChange={e=>updItem(i,'pcs',+e.target.value)}/></div>
+        <div><label style={{...S.lbl,fontSize:10.5}}>Gross Wt</label><input style={{...S.inp,fontSize:12.5}} type="number" step="0.001" value={it.grossWt} onChange={e=>updItem(i,'grossWt',+e.target.value)}/></div>
+        <div><label style={{...S.lbl,fontSize:10.5}}>Net Wt</label><input style={{...S.inp,fontSize:12.5}} type="number" step="0.001" value={it.netWt} onChange={e=>updItem(i,'netWt',+e.target.value)}/></div>
+        <div><label style={{...S.lbl,fontSize:10.5}}>Purity</label><select style={{...S.inp,fontSize:12.5}} value={it.purity} onChange={e=>updItem(i,'purity',e.target.value)}>{PURITIES.map(p=><option key={p.v} value={p.v}>{p.v}</option>)}</select></div>
+        {f.items.length>1&&<button style={{background:'none',border:'none',cursor:'pointer',color:'#c0392b'}} onClick={()=>remItem(i)}><Ic name="x" size={14}/></button>}
+      </div>)}
+      <div style={{fontSize:12,fontWeight:700,color:'#6b4f1d',marginTop:4}}>Total Net Weight: {fW(totalWt)}</div>
+    </div>
+
+    <div><label style={S.lbl}>Notes</label><textarea style={{...S.inp,minHeight:36}} value={f.notes||''} onChange={e=>set(p=>({...p,notes:e.target.value}))}/></div>
+    <div style={{display:'flex',gap:10,justifyContent:'flex-end',marginTop:14}}>
+      <button style={S.btnS} onClick={onClose}>Cancel</button>
+      <button style={S.btnP} onClick={()=>{if(!f.jobworkerName){notify("Jobworker required","warning");return;}onSave({...f,totalWeight:totalWt});}}><Ic name="save" size={15}/> Save DC</button>
+    </div>
+  </div>;
+}
+
+// ═══════════════════════════════════════
+// LINE OF SALE FORM
+// ═══════════════════════════════════════
+function LOSForm({data,onSave,onClose,customers,products,notify,settings,count}){
+  const defItem={productName:'',hsn:'7113',pcs:0,grossWt:0,netWt:0,purity:settings.defaultPurity||'916',ratePerGm:0,makingType:'per_gm',makingCharge:0,stoneCharges:0,gstRate:settings.defaultGst||3};
+  const[f,set]=useState({losNumber:'',date:td(),retailerName:'',retailerGstin:'',retailerAddress:'',retailerState:'',retailerStateCode:'',retailerPhone:'',city:'',status:'On Approval',items:[{...defItem}],notes:'',...data});
+
+  const addItem=()=>set(p=>({...p,items:[...p.items,{...defItem}]}));
+  const updItem=(i,k,v)=>set(p=>({...p,items:p.items.map((it,j)=>{
+    if(j!==i)return it;
+    const updated={...it,[k]:v};
+    if(k==='productName'){const prod=products.find(x=>x.name===v);if(prod){updated.hsn=prod.hsn||'7113';updated.purity=prod.defaultPurity||settings.defaultPurity;updated.makingType=prod.makingType||'per_gm';updated.makingCharge=prod.makingCharge||0;updated.gstRate=prod.defaultGst||3;}}
+    return updated;
+  })}));
+  const remItem=(i)=>set(p=>({...p,items:p.items.filter((_,j)=>j!==i)}));
+
+  const totalWt=f.items.reduce((s,it)=>s+(it.netWt||0),0);
+  const totalVal=f.items.reduce((s,it)=>{const mv=(it.netWt||0)*(it.ratePerGm||0);const mk=it.makingType==='per_gm'?(it.makingCharge||0)*(it.netWt||0):it.makingType==='per_pc'?(it.makingCharge||0)*(it.pcs||1):(it.makingCharge||0);return s+mv+mk+(it.stoneCharges||0);},0);
+
+  return <div>
+    <div className="form-grid-3" style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:10,marginBottom:14}}>
+      <div><label style={S.lbl}>LOS #</label><input style={{...S.inp,fontFamily:'monospace'}} value={f.losNumber} placeholder={'LOS-'+String(count+1).padStart(4,'0')} onChange={e=>set(p=>({...p,losNumber:e.target.value}))}/></div>
+      <div><label style={S.lbl}>Date</label><input style={S.inp} type="date" value={f.date} onChange={e=>set(p=>({...p,date:e.target.value}))}/></div>
+      <div><label style={S.lbl}>City</label><input style={S.inp} value={f.city} placeholder="Destination city" onChange={e=>set(p=>({...p,city:e.target.value}))}/></div>
+    </div>
+    <div className="form-grid-2" style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10,marginBottom:14}}>
+      <div><label style={S.lbl}>Retailer *</label><select style={S.inp} value={f.retailerName} onChange={e=>{const c=customers.find(x=>x.name===e.target.value);if(c)set(p=>({...p,retailerName:c.name,retailerGstin:c.gstin||'',retailerAddress:c.address||'',retailerState:c.state||'',retailerStateCode:c.stateCode||'',retailerPhone:c.phone||'',city:c.city||p.city}));else set(p=>({...p,retailerName:e.target.value}));}}>
+        <option value="">Select...</option>{customers.map(c=><option key={c.id} value={c.name}>{c.name} {c.city?'('+c.city+')':''}</option>)}
+      </select></div>
+      <div><label style={S.lbl}>Phone</label><input style={S.inp} value={f.retailerPhone} onChange={e=>set(p=>({...p,retailerPhone:e.target.value}))}/></div>
+      <div><label style={S.lbl}>Status</label><select style={S.inp} value={f.status} onChange={e=>set(p=>({...p,status:e.target.value}))}><option>On Approval</option><option>Sold</option><option>Returned</option></select></div>
+    </div>
+
+    {/* Items — same as invoice */}
+    <div style={{marginBottom:14}}>
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:6}}>
+        <h4 style={{margin:0,fontSize:13,fontWeight:700,color:'#5a5040'}}>Finished Jewellery Items</h4>
+        <button style={{...S.btnS,...S.btnSm}} onClick={addItem}><Ic name="plus" size={13}/> Add</button>
+      </div>
+      {f.items.map((it,i)=><div key={i} style={{padding:8,background:'#faf8f4',borderRadius:8,border:'1px solid #e8e0d0',marginBottom:4}}>
+        <div className="item-grid-6" style={{display:'grid',gridTemplateColumns:'2fr 1fr 1fr 1fr 1fr 1fr',gap:5,alignItems:'end'}}>
+          <div><label style={{...S.lbl,fontSize:10.5}}>Item</label><select style={{...S.inp,fontSize:12}} value={it.productName} onChange={e=>updItem(i,'productName',e.target.value)}><option value="">Select...</option>{products.map(p=><option key={p.id} value={p.name}>{p.name}</option>)}</select></div>
+          <div><label style={{...S.lbl,fontSize:10.5}}>HSN</label><input style={{...S.inp,fontSize:12}} value={it.hsn} onChange={e=>updItem(i,'hsn',e.target.value)}/></div>
+          <div><label style={{...S.lbl,fontSize:10.5}}>Pcs</label><input style={{...S.inp,fontSize:12}} type="number" value={it.pcs} onChange={e=>updItem(i,'pcs',+e.target.value)}/></div>
+          <div><label style={{...S.lbl,fontSize:10.5}}>Gross Wt</label><input style={{...S.inp,fontSize:12}} type="number" step="0.001" value={it.grossWt} onChange={e=>updItem(i,'grossWt',+e.target.value)}/></div>
+          <div><label style={{...S.lbl,fontSize:10.5}}>Net Wt</label><input style={{...S.inp,fontSize:12}} type="number" step="0.001" value={it.netWt} onChange={e=>updItem(i,'netWt',+e.target.value)}/></div>
+          <div><label style={{...S.lbl,fontSize:10.5}}>Purity</label><select style={{...S.inp,fontSize:12}} value={it.purity} onChange={e=>updItem(i,'purity',e.target.value)}>{PURITIES.map(p=><option key={p.v} value={p.v}>{p.v}</option>)}</select></div>
+        </div>
+        <div className="item-grid-inner" style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr 1fr 1fr auto',gap:5,marginTop:4,alignItems:'end'}}>
+          <div><label style={{...S.lbl,fontSize:10.5}}>Rate/gm</label><input style={{...S.inp,fontSize:12}} type="number" value={it.ratePerGm} onChange={e=>updItem(i,'ratePerGm',+e.target.value)}/></div>
+          <div><label style={{...S.lbl,fontSize:10.5}}>Making Type</label><select style={{...S.inp,fontSize:12}} value={it.makingType} onChange={e=>updItem(i,'makingType',e.target.value)}>{MAKING_TYPES.map(m=><option key={m.v} value={m.v}>{m.l}</option>)}</select></div>
+          <div><label style={{...S.lbl,fontSize:10.5}}>Making (₹)</label><input style={{...S.inp,fontSize:12}} type="number" value={it.makingCharge} onChange={e=>updItem(i,'makingCharge',+e.target.value)}/></div>
+          <div><label style={{...S.lbl,fontSize:10.5}}>Stone (₹)</label><input style={{...S.inp,fontSize:12}} type="number" value={it.stoneCharges} onChange={e=>updItem(i,'stoneCharges',+e.target.value)}/></div>
+          <div><label style={{...S.lbl,fontSize:10.5}}>GST%</label><select style={{...S.inp,fontSize:12}} value={it.gstRate} onChange={e=>updItem(i,'gstRate',+e.target.value)}>{GST_RATES.map(r=><option key={r} value={r}>{r}%</option>)}</select></div>
+          {f.items.length>1&&<button style={{background:'none',border:'none',cursor:'pointer',color:'#c0392b'}} onClick={()=>remItem(i)}><Ic name="x" size={14}/></button>}
+        </div>
+      </div>)}
+      <div style={{display:'flex',gap:16,fontSize:12,fontWeight:700,color:'#6b4f1d',marginTop:4}}>
+        <span>Total Weight: {fW(totalWt)}</span><span>Total Value: {fC(totalVal)}</span>
+      </div>
+    </div>
+
+    <div><label style={S.lbl}>Notes</label><textarea style={{...S.inp,minHeight:36}} value={f.notes||''} onChange={e=>set(p=>({...p,notes:e.target.value}))}/></div>
+    <div style={{display:'flex',gap:10,justifyContent:'flex-end',marginTop:14}}>
+      <button style={S.btnS} onClick={onClose}>Cancel</button>
+      <button style={S.btnP} onClick={()=>{if(!f.retailerName){notify("Retailer required","warning");return;}onSave({...f,totalWeight:totalWt,totalValue:Math.round(totalVal*100)/100});}}><Ic name="save" size={15}/> Save Line of Sale</button>
+    </div>
+  </div>;
+}
+
+// Expense & Receipt/Payment forms
+function ExpForm({data,onSave,onClose}){
+  const[f,set]=useState({voucherNo:'',date:td(),category:'',vendor:'',amount:0,gstRate:0,paymentMethod:'Cash',description:'',...data});
+  const gst=(+f.amount||0)*(+f.gstRate||0)/100;const total=(+f.amount||0)+gst;
+  return <div>
+    <div className="form-grid-2" style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>
+      <div><label style={S.lbl}>Voucher #</label><input style={S.inp} value={f.voucherNo} onChange={e=>set(p=>({...p,voucherNo:e.target.value}))}/></div>
+      <div><label style={S.lbl}>Date</label><input style={S.inp} type="date" value={f.date} onChange={e=>set(p=>({...p,date:e.target.value}))}/></div>
+      <div><label style={S.lbl}>Category</label><select style={S.inp} value={f.category} onChange={e=>set(p=>({...p,category:e.target.value}))}><option value="">Select</option>{EXP_CATS.map(c=><option key={c}>{c}</option>)}</select></div>
+      <div><label style={S.lbl}>Vendor</label><input style={S.inp} value={f.vendor} onChange={e=>set(p=>({...p,vendor:e.target.value}))}/></div>
+      <div><label style={S.lbl}>Amount ₹</label><input style={S.inp} type="number" value={f.amount} onChange={e=>set(p=>({...p,amount:+e.target.value}))}/></div>
+      <div><label style={S.lbl}>GST %</label><select style={S.inp} value={f.gstRate} onChange={e=>set(p=>({...p,gstRate:+e.target.value}))}>{GST_RATES.map(r=><option key={r} value={r}>{r}%</option>)}</select></div>
+      <div><label style={S.lbl}>Payment Method</label><select style={S.inp} value={f.paymentMethod} onChange={e=>set(p=>({...p,paymentMethod:e.target.value}))}>{PAY_MODES.map(m=><option key={m}>{m}</option>)}</select></div>
+      <div><label style={S.lbl}>Total</label><div style={{padding:'9px 0',fontWeight:700,fontSize:15,color:'#27ae60'}}>{fC(total)}</div></div>
+    </div>
+    <div style={{marginTop:10}}><label style={S.lbl}>Description</label><textarea style={{...S.inp,minHeight:40}} value={f.description||''} onChange={e=>set(p=>({...p,description:e.target.value}))}/></div>
+    <div style={{display:'flex',gap:10,justifyContent:'flex-end',marginTop:14}}>
+      <button style={S.btnS} onClick={onClose}>Cancel</button>
+      <button style={S.btnP} onClick={()=>onSave({...f,gstAmount:Math.round(gst*100)/100,total:Math.round(total*100)/100})}><Ic name="save" size={15}/> Save</button>
+    </div>
+  </div>;
+}
+
+function RecPayForm({data,onSave,onClose,type,count}){
+  const isR=type==='receipt';
+  const nk=isR?'receiptNo':'paymentNo';const pk=isR?'receivedFrom':'paidTo';
+  const prefix=isR?'REC-':'PAY-';
+  const[f,set]=useState({[nk]:'',[pk]:'',date:td(),amount:0,mode:'Cash',description:'',towards:'',...data});
+  return <div>
+    <div className="form-grid-2" style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>
+      <div><label style={S.lbl}>{isR?'Receipt':'Payment'} #</label><input style={{...S.inp,fontFamily:'monospace'}} value={f[nk]||''} placeholder={prefix+String((count||0)+1).padStart(4,'0')} onChange={e=>set(p=>({...p,[nk]:e.target.value}))}/></div>
+      <div><label style={S.lbl}>Date</label><input style={S.inp} type="date" value={f.date} onChange={e=>set(p=>({...p,date:e.target.value}))}/></div>
+      <div><label style={S.lbl}>{isR?'Received From':'Paid To'} *</label><input style={S.inp} value={f[pk]||''} onChange={e=>set(p=>({...p,[pk]:e.target.value}))}/></div>
+      <div><label style={S.lbl}>Amount ₹ *</label><input style={S.inp} type="number" value={f.amount} onChange={e=>set(p=>({...p,amount:+e.target.value}))}/></div>
+      <div><label style={S.lbl}>Mode</label><select style={S.inp} value={f.mode} onChange={e=>set(p=>({...p,mode:e.target.value}))}>{PAY_MODES.map(m=><option key={m}>{m}</option>)}</select></div>
+      <div><label style={S.lbl}>Towards / Reference</label><input style={S.inp} value={f.towards||''} placeholder="Invoice ref, advance, etc." onChange={e=>set(p=>({...p,towards:e.target.value}))}/></div>
+    </div>
+    <div style={{marginTop:10}}><label style={S.lbl}>Description</label><textarea style={{...S.inp,minHeight:40}} value={f.description||''} onChange={e=>set(p=>({...p,description:e.target.value}))}/></div>
+    <div style={{display:'flex',gap:10,justifyContent:'flex-end',marginTop:14}}>
+      <button style={S.btnS} onClick={onClose}>Cancel</button>
+      <button style={S.btnP} onClick={()=>onSave(f)}><Ic name="save" size={15}/> Save</button>
+    </div>
+  </div>;
+}
+
+// ═══════════════════════════════════════
+// DOCUMENT VIEW + PRINT
+// ═══════════════════════════════════════
+function DocView({type,data,company,logo}){
+  const doPrint=()=>{
+    let html='';
+    if(type==='invoice')html=buildInvPrint(data,company,logo);
+    else if(type==='dc')html=buildDCPrint(data,company,logo);
+    else if(type==='los')html=buildLOSPrint(data,company,logo);
+    else if(type==='receipt')html=buildRecPayPrint(data,company,logo,'RECEIPT VOUCHER','receivedFrom','Received From');
+    else if(type==='payment')html=buildRecPayPrint(data,company,logo,'PAYMENT VOUCHER','paidTo','Paid To');
+    else if(type==='expense')html=buildExpPrint(data,company,logo);
+    printDoc(html);
+  };
+
+  return <div>
+    <div style={{display:'flex',justifyContent:'flex-end',gap:8,marginBottom:14}}>
+      <button style={S.btnP} onClick={doPrint}><Ic name="print" size={15}/> Print / Save as PDF</button>
+      {type==='invoice'&&<button style={S.btnS} onClick={()=>window.open('https://ewaybillgst.gov.in','_blank')}><Ic name="globe" size={15}/> e-Way Bill</button>}
+    </div>
+    {/* Quick inline preview */}
+    <div style={{...S.card,padding:20}}>
+      {type==='invoice'&&<InvPreview inv={data} company={company} logo={logo}/>}
+      {type==='dc'&&<DCPreview dc={data} company={company}/>}
+      {type==='los'&&<LOSPreview los={data} company={company}/>}
+      {type==='receipt'&&<RecPayPreview data={data} type="receipt" company={company}/>}
+      {type==='payment'&&<RecPayPreview data={data} type="payment" company={company}/>}
+      {type==='expense'&&<ExpPreview data={data} company={company}/>}
+    </div>
+  </div>;
+}
+
+// Inline Previews
+function InvPreview({inv,company,logo}){
+  const isIGST=inv.customerStateCode&&company.stateCode&&inv.customerStateCode!==company.stateCode;
+  return <div>
+    <div style={{display:'flex',justifyContent:'space-between',marginBottom:16,flexWrap:'wrap',gap:12}}>
+      <div>
+        {logo&&<img src={logo} style={{width:50,height:50,objectFit:'contain',borderRadius:6,marginBottom:6}}/>}
+        <div style={{fontSize:16,fontWeight:700,color:'#3a2e1a'}}>{company.companyName||'Company'}</div>
+        <div style={{fontSize:11,color:'#8a7e6b'}}>GSTIN: {company.gstin||'—'}</div>
+      </div>
+      <div style={{textAlign:'right'}}>
+        <Badge text="TAX INVOICE"/>
+        <div style={{fontFamily:'monospace',fontSize:18,fontWeight:700,marginTop:4}}>{inv.invoiceNumber}</div>
+        <div style={{fontSize:11.5,color:'#8a7e6b'}}>Date: {fD(inv.invoiceDate)}</div>
+      </div>
+    </div>
+    <div style={{padding:'10px 0',borderTop:'1px solid #e8e0d0',borderBottom:'1px solid #e8e0d0',marginBottom:12}}>
+      <div style={{fontSize:10,fontWeight:700,color:'#6b4f1d',letterSpacing:'.5px',marginBottom:3}}>BILL TO</div>
+      <div style={{fontWeight:600}}>{inv.customerName}</div>
+      <div style={{fontSize:12,color:'#6b6358'}}>{inv.customerAddress} | {inv.customerState} ({inv.customerStateCode})</div>
+      {inv.customerGstin&&<div style={{fontSize:11,fontFamily:'monospace',color:'#8a7e6b'}}>GSTIN: {inv.customerGstin}</div>}
+    </div>
+    <table style={{width:'100%',borderCollapse:'collapse',fontSize:12.5}}>
+      <thead><tr style={{background:'#faf8f4'}}>{['#','Item','HSN','Pcs','Net Wt','Purity','Rate/gm','Metal Val','Making','Stone','Taxable','GST','Total'].map(h=><th key={h} style={{padding:'6px 4px',textAlign:['#','Item','HSN','Purity'].includes(h)?'left':'right',fontSize:10,fontWeight:700,color:'#8a7e6b',borderBottom:'2px solid #e8e0d0'}}>{h}</th>)}</tr></thead>
+      <tbody>{(inv.items||[]).map((it,i)=>{
+        const mv=(it.netWt||0)*(it.ratePerGm||0);
+        const mk=it.makingType==='per_gm'?(it.makingCharge||0)*(it.netWt||0):it.makingType==='per_pc'?(it.makingCharge||0)*(it.pcs||1):(it.makingCharge||0);
+        const tx=mv+mk+(it.stoneCharges||0);const gst=tx*(it.gstRate||3)/100;
+        return <tr key={i}><td style={{padding:'5px 4px',borderBottom:'1px solid #f3efe8'}}>{i+1}</td><td style={{padding:'5px 4px',borderBottom:'1px solid #f3efe8',fontWeight:600}}>{it.productName}</td><td style={{padding:'5px 4px',borderBottom:'1px solid #f3efe8',fontFamily:'monospace',fontSize:11}}>{it.hsn}</td><td style={{padding:'5px 4px',borderBottom:'1px solid #f3efe8',textAlign:'right'}}>{it.pcs}</td><td style={{padding:'5px 4px',borderBottom:'1px solid #f3efe8',textAlign:'right'}}>{fW(it.netWt)}</td><td style={{padding:'5px 4px',borderBottom:'1px solid #f3efe8'}}>{it.purity}</td><td style={{padding:'5px 4px',borderBottom:'1px solid #f3efe8',textAlign:'right'}}>{fC(it.ratePerGm)}</td><td style={{padding:'5px 4px',borderBottom:'1px solid #f3efe8',textAlign:'right'}}>{fC(mv)}</td><td style={{padding:'5px 4px',borderBottom:'1px solid #f3efe8',textAlign:'right'}}>{fC(mk)}</td><td style={{padding:'5px 4px',borderBottom:'1px solid #f3efe8',textAlign:'right'}}>{fC(it.stoneCharges||0)}</td><td style={{padding:'5px 4px',borderBottom:'1px solid #f3efe8',textAlign:'right',fontWeight:600}}>{fC(tx)}</td><td style={{padding:'5px 4px',borderBottom:'1px solid #f3efe8',textAlign:'right'}}>{fC(gst)}</td><td style={{padding:'5px 4px',borderBottom:'1px solid #f3efe8',textAlign:'right',fontWeight:700}}>{fC(tx+gst)}</td></tr>;
+      })}</tbody>
+    </table>
+    <div style={{display:'flex',justifyContent:'flex-end',marginTop:12}}>
+      <div className="totals-panel" style={{width:260}}>
+        <div style={{display:'flex',justifyContent:'space-between',fontSize:13,padding:'3px 0'}}><span style={{color:'#6b6358'}}>Taxable</span><span>{fC(inv.taxableAmount)}</span></div>
+        {!isIGST&&<><div style={{display:'flex',justifyContent:'space-between',fontSize:13,padding:'3px 0'}}><span style={{color:'#6b6358'}}>CGST</span><span>{fC(inv.cgstAmount)}</span></div><div style={{display:'flex',justifyContent:'space-between',fontSize:13,padding:'3px 0'}}><span style={{color:'#6b6358'}}>SGST</span><span>{fC(inv.sgstAmount)}</span></div></>}
+        {isIGST&&<div style={{display:'flex',justifyContent:'space-between',fontSize:13,padding:'3px 0'}}><span style={{color:'#6b6358'}}>IGST</span><span>{fC(inv.igstAmount)}</span></div>}
+        <div style={{display:'flex',justifyContent:'space-between',fontSize:15,fontWeight:800,padding:'6px 0 0',borderTop:'2px solid #3a2e1a',marginTop:4}}><span>Grand Total</span><span style={{color:'#6b4f1d'}}>{fC(inv.grandTotal)}</span></div>
+        <div style={{fontSize:10.5,color:'#8a7e6b',fontStyle:'italic',marginTop:2}}>{numWords(inv.grandTotal)}</div>
+      </div>
+    </div>
+  </div>;
+}
+
+function DCPreview({dc,company}){return <div><div style={{fontSize:14,fontWeight:700,marginBottom:8}}>DC: {dc.dcNumber} | {fD(dc.date)}</div><div style={{fontSize:13}}>Jobworker: <strong>{dc.jobworkerName}</strong> | Purpose: {dc.purpose} | Status: {dc.status}</div><div style={{fontSize:12,color:'#6b6358',marginTop:6}}>⚠ Goods sent for jobwork — not for sale</div><table style={{width:'100%',borderCollapse:'collapse',fontSize:12,marginTop:10}}><thead><tr style={{background:'#faf8f4'}}>{['#','Description','Pcs','Gross Wt','Net Wt','Purity'].map(h=><th key={h} style={{padding:'5px 6px',textAlign:'left',fontSize:10,fontWeight:700,color:'#8a7e6b',borderBottom:'2px solid #e8e0d0'}}>{h}</th>)}</tr></thead><tbody>{(dc.items||[]).map((it,i)=><tr key={i}><td style={{padding:'4px 6px',borderBottom:'1px solid #f3efe8'}}>{i+1}</td><td style={{padding:'4px 6px',borderBottom:'1px solid #f3efe8',fontWeight:600}}>{it.description}</td><td style={{padding:'4px 6px',borderBottom:'1px solid #f3efe8'}}>{it.pcs}</td><td style={{padding:'4px 6px',borderBottom:'1px solid #f3efe8'}}>{fW(it.grossWt)}</td><td style={{padding:'4px 6px',borderBottom:'1px solid #f3efe8'}}>{fW(it.netWt)}</td><td style={{padding:'4px 6px',borderBottom:'1px solid #f3efe8'}}>{it.purity}</td></tr>)}</tbody></table><div style={{fontWeight:700,fontSize:12,color:'#6b4f1d',marginTop:6}}>Total Net Wt: {fW(dc.totalWeight)}</div></div>;}
+
+function LOSPreview({los,company}){return <div><div style={{fontSize:14,fontWeight:700,marginBottom:8}}>Line of Sale: {los.losNumber} | {fD(los.date)}</div><div style={{fontSize:13}}>Retailer: <strong>{los.retailerName}</strong> | City: {los.city} | Status: <Badge text={los.status} bg={los.status==='Sold'?'#d5f5e3':los.status==='Returned'?'#fdeaea':'#fef9e7'} color={los.status==='Sold'?'#27ae60':los.status==='Returned'?'#c0392b':'#856404'}/></div><div style={{fontWeight:700,fontSize:12,marginTop:10}}>Total Weight: {fW(los.totalWeight)} | Total Value: {fC(los.totalValue)}</div></div>;}
+
+function RecPayPreview({data,type,company}){const isR=type==='receipt';return <div><div style={{fontSize:14,fontWeight:700,marginBottom:8}}>{isR?'Receipt':'Payment'} Voucher: {data[isR?'receiptNo':'paymentNo']}</div><div style={{fontSize:13}}>Date: {fD(data.date)} | {isR?'From':'To'}: <strong>{data[isR?'receivedFrom':'paidTo']}</strong></div><div style={{fontSize:18,fontWeight:800,color:'#6b4f1d',marginTop:8}}>{fC(data.amount)}</div><div style={{fontSize:11.5,color:'#8a7e6b',fontStyle:'italic'}}>{numWords(data.amount)}</div><div style={{fontSize:12,marginTop:6}}>Mode: {data.mode} {data.towards?'| Towards: '+data.towards:''}</div>{data.description&&<div style={{fontSize:12,color:'#6b6358',marginTop:4}}>{data.description}</div>}</div>;}
+
+function ExpPreview({data,company}){return <div><div style={{fontSize:14,fontWeight:700,marginBottom:8}}>Expense: {data.voucherNo||'—'}</div><div style={{fontSize:13}}>Date: {fD(data.date)} | Category: {data.category} | Vendor: {data.vendor}</div><div style={{fontSize:16,fontWeight:800,color:'#c0392b',marginTop:8}}>{fC(data.total||data.amount)}</div><div style={{fontSize:12,marginTop:4}}>Payment: {data.paymentMethod}</div></div>;}
+
+// Print builders
+function buildInvPrint(inv,company,logo){
+  const isIGST=inv.customerStateCode&&company.stateCode&&inv.customerStateCode!==company.stateCode;
+  let itemsHTML='';
+  (inv.items||[]).forEach((it,i)=>{
+    const mv=(it.netWt||0)*(it.ratePerGm||0);const mk=it.makingType==='per_gm'?(it.makingCharge||0)*(it.netWt||0):it.makingType==='per_pc'?(it.makingCharge||0)*(it.pcs||1):(it.makingCharge||0);const tx=mv+mk+(it.stoneCharges||0);const gst=tx*(it.gstRate||3)/100;
+    itemsHTML+=`<tr><td style="padding:6px 4px;border-bottom:1px solid #eee;font-size:12px">${i+1}</td><td style="padding:6px 4px;border-bottom:1px solid #eee;font-weight:600;font-size:12px">${it.productName}<br/><span style="font-size:10px;color:#888">HSN:${it.hsn} | ${it.purity}</span></td><td style="padding:6px 4px;border-bottom:1px solid #eee;text-align:right;font-size:12px">${it.pcs}</td><td style="padding:6px 4px;border-bottom:1px solid #eee;text-align:right;font-size:12px">${(it.netWt||0).toFixed(3)}</td><td style="padding:6px 4px;border-bottom:1px solid #eee;text-align:right;font-size:12px">${fC(it.ratePerGm)}</td><td style="padding:6px 4px;border-bottom:1px solid #eee;text-align:right;font-size:12px">${fC(mv)}</td><td style="padding:6px 4px;border-bottom:1px solid #eee;text-align:right;font-size:12px">${fC(mk)}</td><td style="padding:6px 4px;border-bottom:1px solid #eee;text-align:right;font-size:12px">${fC(it.stoneCharges||0)}</td><td style="padding:6px 4px;border-bottom:1px solid #eee;text-align:right;font-weight:600;font-size:12px">${fC(tx)}</td><td style="padding:6px 4px;border-bottom:1px solid #eee;text-align:right;font-size:12px">${it.gstRate}%</td><td style="padding:6px 4px;border-bottom:1px solid #eee;text-align:right;font-weight:700;font-size:12px">${fC(tx+gst)}</td></tr>`;
+  });
+  let taxHTML=isIGST?`<tr><td style="padding:4px 0;font-size:12px">IGST</td><td style="text-align:right;font-size:12px">${fC(inv.igstAmount)}</td></tr>`:`<tr><td style="padding:4px 0;font-size:12px">CGST</td><td style="text-align:right;font-size:12px">${fC(inv.cgstAmount)}</td></tr><tr><td style="padding:4px 0;font-size:12px">SGST</td><td style="text-align:right;font-size:12px">${fC(inv.sgstAmount)}</td></tr>`;
+
+  return `<div style="max-width:780px;margin:0 auto;background:#fff">
+    ${buildPrintHeader(company,'TAX INVOICE',inv.invoiceNumber,fD(inv.invoiceDate),logo)}
+    <div style="padding:16px 30px;border-bottom:1px solid #eee">
+      <div style="font-size:10px;font-weight:700;color:#6b4f1d;letter-spacing:1px;margin-bottom:4px">BILL TO</div>
+      <div style="font-size:14px;font-weight:700">${inv.customerName}</div>
+      <div style="font-size:11.5px;color:#555">${inv.customerAddress||''} | ${inv.customerState||''} (${inv.customerStateCode||''})</div>
+      ${inv.customerGstin?'<div style="font-family:monospace;font-size:10.5px;color:#888;margin-top:2px">GSTIN: '+inv.customerGstin+'</div>':''}
+    </div>
+    <div style="padding:0 30px">
+      <table style="width:100%;border-collapse:collapse"><thead><tr>
+        ${['#','Item','Pcs','Net Wt(gm)','Rate/gm','Metal','Making','Stone','Taxable','GST%','Total'].map(h=>`<th style="padding:8px 4px;text-align:${['#','Item'].includes(h)?'left':'right'};font-size:9.5px;font-weight:700;color:#888;border-bottom:2px solid #3a2e1a;letter-spacing:.3px">${h}</th>`).join('')}
+      </tr></thead><tbody>${itemsHTML}</tbody></table>
+    </div>
+    <div style="display:flex;justify-content:space-between;padding:14px 30px;gap:20">
+      <div style="font-size:11px;color:#555;font-style:italic;flex:1;padding-top:4px">${numWords(inv.grandTotal)}</div>
+      <table style="width:240px"><tbody>
+        <tr><td style="padding:4px 0;font-size:12px">Taxable</td><td style="text-align:right;font-family:monospace;font-size:12px">${fC(inv.taxableAmount)}</td></tr>
+        ${taxHTML}
+        <tr><td style="padding:8px 0 0;font-size:14px;font-weight:700;border-top:2px solid #3a2e1a">Grand Total</td><td style="text-align:right;font-family:monospace;font-size:14px;font-weight:700;padding-top:8px;border-top:2px solid #3a2e1a;color:#6b4f1d">${fC(inv.grandTotal)}</td></tr>
+      </tbody></table>
+    </div>
+    ${inv.notes?'<div style="padding:8px 30px;font-size:11px;color:#555"><strong>Notes:</strong> '+inv.notes+'</div>':''}
+    ${buildPrintFooter(company)}
+  </div>`;
+}
+
+function buildDCPrint(dc,company,logo){
+  let itemsHTML='';(dc.items||[]).forEach((it,i)=>{itemsHTML+=`<tr><td style="padding:6px;border-bottom:1px solid #eee">${i+1}</td><td style="padding:6px;border-bottom:1px solid #eee;font-weight:600">${it.description}</td><td style="padding:6px;border-bottom:1px solid #eee;text-align:right">${it.pcs}</td><td style="padding:6px;border-bottom:1px solid #eee;text-align:right">${(it.grossWt||0).toFixed(3)}</td><td style="padding:6px;border-bottom:1px solid #eee;text-align:right">${(it.netWt||0).toFixed(3)}</td><td style="padding:6px;border-bottom:1px solid #eee">${it.purity}</td></tr>`;});
+  return `<div style="max-width:780px;margin:0 auto">${buildPrintHeader(company,'DELIVERY CHALLAN',dc.dcNumber,fD(dc.date),logo)}<div style="padding:14px 30px;border-bottom:1px solid #eee"><strong>Jobworker:</strong> ${dc.jobworkerName} | <strong>Purpose:</strong> ${dc.purpose} | <strong>Due Date:</strong> ${fD(dc.dueDate)}</div><div style="padding:4px 30px;background:#fff3cd;font-size:11px;color:#856404">⚠ Goods sent for jobwork/finishing — NOT for sale. Must be returned within ${dc.dueDate?daysDiff(dc.date,dc.dueDate):'3'} days.</div><div style="padding:0 30px"><table style="width:100%;border-collapse:collapse;font-size:12.5px"><thead><tr>${['#','Description','Pcs','Gross Wt(gm)','Net Wt(gm)','Purity'].map(h=>`<th style="padding:8px 6px;text-align:${['#','Description','Purity'].includes(h)?'left':'right'};font-size:10px;font-weight:700;color:#888;border-bottom:2px solid #3a2e1a">${h}</th>`).join('')}</tr></thead><tbody>${itemsHTML}</tbody></table></div><div style="padding:10px 30px;font-weight:700;font-size:13px;color:#6b4f1d">Total Net Weight: ${fW(dc.totalWeight)}</div>${dc.notes?'<div style="padding:6px 30px;font-size:11px;color:#555">Notes: '+dc.notes+'</div>':''}${buildPrintFooter(company)}</div>`;
+}
+
+function buildLOSPrint(los,company,logo){
+  let itemsHTML='';(los.items||[]).forEach((it,i)=>{const mv=(it.netWt||0)*(it.ratePerGm||0);itemsHTML+=`<tr><td style="padding:5px;border-bottom:1px solid #eee">${i+1}</td><td style="padding:5px;border-bottom:1px solid #eee;font-weight:600">${it.productName}</td><td style="padding:5px;border-bottom:1px solid #eee">${it.hsn}</td><td style="padding:5px;border-bottom:1px solid #eee;text-align:right">${it.pcs}</td><td style="padding:5px;border-bottom:1px solid #eee;text-align:right">${(it.netWt||0).toFixed(3)}</td><td style="padding:5px;border-bottom:1px solid #eee">${it.purity}</td><td style="padding:5px;border-bottom:1px solid #eee;text-align:right">${fC(it.ratePerGm)}</td><td style="padding:5px;border-bottom:1px solid #eee;text-align:right">${fC(mv)}</td></tr>`;});
+  return `<div style="max-width:780px;margin:0 auto">${buildPrintHeader(company,'LINE OF SALE CHALLAN',los.losNumber,fD(los.date),logo)}<div style="padding:14px 30px;border-bottom:1px solid #eee"><strong>Retailer:</strong> ${los.retailerName} | <strong>City:</strong> ${los.city||'—'} | <strong>Status:</strong> ${los.status}</div><div style="padding:4px 30px;background:#e8f0fe;font-size:11px;color:#34495e">Finished jewellery items given on approval — must be settled (sold/returned) within ${los.date?'same day':'1 day'}.</div><div style="padding:0 30px"><table style="width:100%;border-collapse:collapse;font-size:12px"><thead><tr>${['#','Item','HSN','Pcs','Net Wt(gm)','Purity','Rate/gm','Metal Value'].map(h=>`<th style="padding:7px 5px;text-align:${['#','Item','HSN','Purity'].includes(h)?'left':'right'};font-size:10px;font-weight:700;color:#888;border-bottom:2px solid #3a2e1a">${h}</th>`).join('')}</tr></thead><tbody>${itemsHTML}</tbody></table></div><div style="padding:10px 30px;font-weight:700;font-size:13px;color:#6b4f1d">Total Weight: ${fW(los.totalWeight)} | Total Value: ${fC(los.totalValue)}</div>${buildPrintFooter(company)}</div>`;
+}
+
+function buildRecPayPrint(data,company,logo,title,fromKey,fromLabel){
+  return `<div style="max-width:600px;margin:0 auto">${buildPrintHeader(company,title,data.receiptNo||data.paymentNo,fD(data.date),logo)}<div style="padding:30px"><table style="width:100%;font-size:13px"><tr><td style="padding:8px 0;font-weight:600">${fromLabel}:</td><td>${data[fromKey]}</td></tr><tr><td style="padding:8px 0;font-weight:600">Amount:</td><td style="font-size:20px;font-weight:800;color:#6b4f1d">${fC(data.amount)}</td></tr><tr><td style="padding:8px 0;font-weight:600">In Words:</td><td style="font-style:italic;font-size:12px;color:#555">${numWords(data.amount)}</td></tr><tr><td style="padding:8px 0;font-weight:600">Mode:</td><td>${data.mode}</td></tr>${data.towards?`<tr><td style="padding:8px 0;font-weight:600">Towards:</td><td>${data.towards}</td></tr>`:''}<tr><td style="padding:8px 0;font-weight:600">Description:</td><td>${data.description||'—'}</td></tr></table></div>${buildPrintFooter(company)}</div>`;
+}
+
+function buildExpPrint(data,company,logo){
+  const total=data.total||data.amount||0;
+  return `<div style="max-width:600px;margin:0 auto">${buildPrintHeader(company,'EXPENSE VOUCHER',data.voucherNo,fD(data.date),logo)}<div style="padding:30px"><table style="width:100%;font-size:13px"><tr><td style="padding:8px 0;font-weight:600">Category:</td><td>${data.category}</td></tr><tr><td style="padding:8px 0;font-weight:600">Vendor:</td><td>${data.vendor||'—'}</td></tr><tr><td style="padding:8px 0;font-weight:600">Amount:</td><td style="font-size:18px;font-weight:800;color:#c0392b">${fC(total)}</td></tr><tr><td style="padding:8px 0;font-weight:600">In Words:</td><td style="font-style:italic;font-size:12px">${numWords(total)}</td></tr><tr><td style="padding:8px 0;font-weight:600">Payment:</td><td>${data.paymentMethod||'—'}</td></tr><tr><td style="padding:8px 0;font-weight:600">Description:</td><td>${data.description||'—'}</td></tr></table></div>${buildPrintFooter(company)}</div>`;
+}
+
+// ═══════════════════════════════════════
+// SALES REGISTER
+// ═══════════════════════════════════════
+function SalesRegister({invoices,company,logo}){
+  const[dateFrom,setDF]=useState('');const[dateTo,setDT]=useState('');const[custFilter,setCF]=useState('');
+  
+  // Flatten all invoice items into rows
+  const allItems=[];
+  invoices.forEach(inv=>{
+    (inv.items||[]).forEach(it=>{
+      const mv=(it.netWt||0)*(it.ratePerGm||0);
+      const mk=it.makingType==='per_gm'?(it.makingCharge||0)*(it.netWt||0):it.makingType==='per_pc'?(it.makingCharge||0)*(it.pcs||1):(it.makingCharge||0);
+      const tx=mv+mk+(it.stoneCharges||0);const gst=tx*(it.gstRate||3)/100;
+      allItems.push({invNo:inv.invoiceNumber,invDate:inv.invoiceDate,customer:inv.customerName,gstin:inv.customerGstin||'',item:it.productName,hsn:it.hsn,pcs:it.pcs||1,netWt:it.netWt||0,purity:it.purity,ratePerGm:it.ratePerGm||0,metalVal:mv,making:mk,stone:it.stoneCharges||0,taxable:tx,gstRate:it.gstRate||3,gst,total:tx+gst});
+    });
+  });
+
+  const filtered=allItems.filter(r=>{
+    if(dateFrom&&r.invDate<dateFrom)return false;
+    if(dateTo&&r.invDate>dateTo)return false;
+    if(custFilter&&!r.customer.toLowerCase().includes(custFilter.toLowerCase()))return false;
+    return true;
+  });
+
+  const totals=filtered.reduce((a,r)=>({wt:a.wt+r.netWt,tax:a.tax+r.taxable,gst:a.gst+r.gst,total:a.total+r.total}),{wt:0,tax:0,gst:0,total:0});
+
+  const doPrint=()=>{
+    let rows='';filtered.forEach((r,i)=>{rows+=`<tr><td style="padding:4px;border:1px solid #ddd;font-size:11px">${i+1}</td><td style="padding:4px;border:1px solid #ddd;font-size:11px">${r.invNo}</td><td style="padding:4px;border:1px solid #ddd;font-size:11px">${fD(r.invDate)}</td><td style="padding:4px;border:1px solid #ddd;font-size:11px">${r.customer}</td><td style="padding:4px;border:1px solid #ddd;font-size:11px">${r.item}</td><td style="padding:4px;border:1px solid #ddd;font-size:11px">${r.hsn}</td><td style="padding:4px;border:1px solid #ddd;font-size:11px;text-align:right">${r.pcs}</td><td style="padding:4px;border:1px solid #ddd;font-size:11px;text-align:right">${r.netWt.toFixed(3)}</td><td style="padding:4px;border:1px solid #ddd;font-size:11px">${r.purity}</td><td style="padding:4px;border:1px solid #ddd;font-size:11px;text-align:right">${fC(r.taxable)}</td><td style="padding:4px;border:1px solid #ddd;font-size:11px;text-align:right">${fC(r.gst)}</td><td style="padding:4px;border:1px solid #ddd;font-size:11px;text-align:right;font-weight:700">${fC(r.total)}</td></tr>`;});
+    printDoc(`<div style="max-width:900px;margin:0 auto">${buildPrintHeader(company,'SALES REGISTER','',dateFrom||dateTo?fD(dateFrom)+' to '+fD(dateTo):'All Dates',logo)}<div style="padding:10px 20px"><table style="width:100%;border-collapse:collapse"><thead><tr>${['#','Inv #','Date','Customer','Item','HSN','Pcs','Net Wt','Purity','Taxable','GST','Total'].map(h=>`<th style="padding:5px;border:1px solid #ddd;font-size:10px;font-weight:700;background:#faf8f4">${h}</th>`).join('')}</tr></thead><tbody>${rows}<tr style="font-weight:700;background:#faf8f4"><td colspan="7" style="padding:5px;border:1px solid #ddd;text-align:right;font-size:11px">TOTALS</td><td style="padding:5px;border:1px solid #ddd;text-align:right;font-size:11px">${totals.wt.toFixed(3)}</td><td style="padding:5px;border:1px solid #ddd"></td><td style="padding:5px;border:1px solid #ddd;text-align:right;font-size:11px">${fC(totals.tax)}</td><td style="padding:5px;border:1px solid #ddd;text-align:right;font-size:11px">${fC(totals.gst)}</td><td style="padding:5px;border:1px solid #ddd;text-align:right;font-size:11px">${fC(totals.total)}</td></tr></tbody></table></div></div>`);
+  };
+
+  return <div>
+    <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:14,flexWrap:'wrap',gap:8}}>
+      <h2 style={{fontSize:20,fontWeight:800,margin:0,color:'#3a2e1a'}}>Sales Register <span style={{fontSize:13,fontWeight:400,color:'#a09880'}}>({filtered.length} items)</span></h2>
+      <button style={S.btnP} onClick={doPrint}><Ic name="print" size={15}/> Print</button>
+    </div>
+    {/* Filters */}
+    <div style={{display:'flex',gap:8,marginBottom:14,flexWrap:'wrap'}}>
+      <div><label style={{...S.lbl,fontSize:11}}>From</label><input style={{...S.inp,width:140,fontSize:12.5}} type="date" value={dateFrom} onChange={e=>setDF(e.target.value)}/></div>
+      <div><label style={{...S.lbl,fontSize:11}}>To</label><input style={{...S.inp,width:140,fontSize:12.5}} type="date" value={dateTo} onChange={e=>setDT(e.target.value)}/></div>
+      <div><label style={{...S.lbl,fontSize:11}}>Customer</label><input style={{...S.inp,width:180,fontSize:12.5}} placeholder="Filter..." value={custFilter} onChange={e=>setCF(e.target.value)}/></div>
+    </div>
+    <div style={{...S.card,overflowX:'auto'}}>
+      <table style={{width:'100%',borderCollapse:'collapse',minWidth:900}}>
+        <thead><tr>{['#','Invoice','Date','Customer','Item','HSN','Pcs','Net Wt','Purity','Rate/gm','Taxable','GST','Total'].map(h=><th key={h} style={S.th}>{h}</th>)}</tr></thead>
+        <tbody>
+          {filtered.map((r,i)=><tr key={i} className="row-hover">
+            <td style={S.td}>{i+1}</td>
+            <td style={{...S.td,fontFamily:'monospace',fontSize:12}}>{r.invNo}</td>
+            <td style={S.td}>{fD(r.invDate)}</td>
+            <td style={{...S.td,fontWeight:600}}>{r.customer}</td>
+            <td style={{...S.td,fontWeight:600}}>{r.item}</td>
+            <td style={{...S.td,fontFamily:'monospace',fontSize:12}}>{r.hsn}</td>
+            <td style={{...S.td,textAlign:'right'}}>{r.pcs}</td>
+            <td style={{...S.td,textAlign:'right'}}>{fW(r.netWt)}</td>
+            <td style={S.td}>{r.purity}</td>
+            <td style={{...S.td,textAlign:'right'}}>{fC(r.ratePerGm)}</td>
+            <td style={{...S.td,textAlign:'right',fontWeight:600}}>{fC(r.taxable)}</td>
+            <td style={{...S.td,textAlign:'right'}}>{fC(r.gst)}</td>
+            <td style={{...S.td,textAlign:'right',fontWeight:700,color:'#6b4f1d'}}>{fC(r.total)}</td>
+          </tr>)}
+          {filtered.length>0&&<tr style={{background:'#faf8f4',fontWeight:700}}>
+            <td colSpan={7} style={{...S.td,textAlign:'right'}}>TOTALS</td>
+            <td style={{...S.td,textAlign:'right'}}>{fW(totals.wt)}</td>
+            <td colSpan={2} style={S.td}></td>
+            <td style={{...S.td,textAlign:'right'}}>{fC(totals.tax)}</td>
+            <td style={{...S.td,textAlign:'right'}}>{fC(totals.gst)}</td>
+            <td style={{...S.td,textAlign:'right',color:'#6b4f1d'}}>{fC(totals.total)}</td>
+          </tr>}
+          {!filtered.length&&<tr><td colSpan={13} style={{...S.td,textAlign:'center',color:'#a09880',padding:30}}>No records found</td></tr>}
+        </tbody>
+      </table>
+    </div>
+  </div>;
+}
+
+// ═══════════════════════════════════════
+// SETTINGS PAGE
+// ═══════════════════════════════════════
+function SettingsPage({company,setCo,logo,setLogo,settings,setSettings,url,setUrl,sid,setSid,conn,syncing,connect,fullSync,backup,lastSync,notify}){
+  const handleLogo=(e)=>{
+    const file=e.target.files[0];if(!file)return;
+    const reader=new FileReader();
+    reader.onload=(ev)=>{setLogo(ev.target.result);LS.set('logo',ev.target.result);notify("Logo uploaded","success");};
+    reader.readAsDataURL(file);
+  };
+
+  return <div className="settings-wrap" style={{maxWidth:620}}>
+    <h2 style={{fontSize:20,fontWeight:800,margin:'0 0 16px',color:'#3a2e1a'}}>Settings</h2>
+
+    {/* Logo */}
+    <div style={{...S.card,padding:20,marginBottom:14}}>
+      <h3 style={{fontSize:14,fontWeight:700,margin:'0 0 12px'}}>🖼 Company Logo</h3>
+      <div style={{display:'flex',alignItems:'center',gap:16}}>
+        {logo?<img src={logo} style={{width:64,height:64,objectFit:'contain',borderRadius:8,border:'1px solid #e8e0d0'}}/>:<div style={{width:64,height:64,borderRadius:8,background:'#f5f0e8',display:'flex',alignItems:'center',justifyContent:'center',color:'#a09880'}}><Ic name="image" size={28}/></div>}
+        <div>
+          <input type="file" accept="image/*" onChange={handleLogo} style={{fontSize:13}}/>
+          <div style={{fontSize:11,color:'#8a7e6b',marginTop:4}}>Used on all printed documents</div>
+          {logo&&<button style={{...S.btnS,...S.btnSm,marginTop:6}} onClick={()=>{setLogo('');LS.set('logo','');notify("Logo removed","info");}}>Remove</button>}
+        </div>
+      </div>
+    </div>
+
+    {/* Company Profile */}
+    <div style={{...S.card,padding:20,marginBottom:14}}>
+      <h3 style={{fontSize:14,fontWeight:700,margin:'0 0 12px'}}>🏢 Company Profile</h3>
+      {[['companyName','Company Name'],['gstin','GSTIN'],['pan','PAN'],['address','Address'],['city','City'],['phone','Phone'],['email','Email'],['bankName','Bank Name'],['accountNo','Account No'],['ifsc','IFSC Code']].map(([k,l])=>
+        <div key={k} style={{marginBottom:10}}><label style={S.lbl}>{l}</label><input style={S.inp} value={company[k]||''} onChange={e=>setCo(p=>({...p,[k]:e.target.value}))}/></div>
+      )}
+      <div style={{marginBottom:10}}><label style={S.lbl}>State</label><select style={S.inp} value={company.state||''} onChange={e=>{const v=e.target.value;const s=STATES.find(x=>x.n===v);setCo(p=>({...p,state:v,stateCode:s?.c||''}));}}><option value="">Select</option>{STATES.map(s=><option key={s.c} value={s.n}>{s.n} ({s.c})</option>)}</select></div>
+      <button style={S.btnP} onClick={()=>{LS.set('company',company);notify("Company profile saved","success");}}><Ic name="save" size={15}/> Save Profile</button>
+    </div>
+
+    {/* Defaults */}
+    <div style={{...S.card,padding:20,marginBottom:14}}>
+      <h3 style={{fontSize:14,fontWeight:700,margin:'0 0 12px'}}>⚙ Jewellery Defaults</h3>
+      <div className="form-grid-2" style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>
+        <div><label style={S.lbl}>DC Limit (days)</label><input style={S.inp} type="number" min="1" value={settings.dcLimit} onChange={e=>setSettings(p=>({...p,dcLimit:+e.target.value}))}/></div>
+        <div><label style={S.lbl}>Line of Sale Limit (days)</label><input style={S.inp} type="number" min="1" value={settings.losLimit} onChange={e=>setSettings(p=>({...p,losLimit:+e.target.value}))}/></div>
+        <div><label style={S.lbl}>Default Purity</label><select style={S.inp} value={settings.defaultPurity} onChange={e=>setSettings(p=>({...p,defaultPurity:e.target.value}))}>{PURITIES.map(p=><option key={p.v} value={p.v}>{p.l}</option>)}</select></div>
+        <div><label style={S.lbl}>Default GST %</label><select style={S.inp} value={settings.defaultGst} onChange={e=>setSettings(p=>({...p,defaultGst:+e.target.value}))}>{GST_RATES.map(r=><option key={r} value={r}>{r}%</option>)}</select></div>
+      </div>
+      <button style={{...S.btnP,marginTop:12}} onClick={()=>{LS.set('settings',settings);notify("Settings saved","success");}}><Ic name="save" size={15}/> Save Settings</button>
+    </div>
+
+    {/* e-Way Bill */}
+    <div style={{...S.card,padding:20,marginBottom:14}}>
+      <h3 style={{fontSize:14,fontWeight:700,margin:'0 0 12px'}}>🚛 e-Way Bill Portal</h3>
+      <p style={{fontSize:13,color:'#6b6358',marginBottom:10}}>Generate e-Way Bill for goods transport (required when value exceeds ₹50,000 for gold/silver).</p>
+      <button style={S.btnP} onClick={()=>window.open('https://ewaybillgst.gov.in','_blank')}><Ic name="globe" size={15}/> Open e-Way Bill Portal</button>
+    </div>
+
+    {/* Google Sheet */}
+    <div style={{...S.card,padding:20}}>
+      <h3 style={{fontSize:14,fontWeight:700,margin:'0 0 12px'}}>🔗 Google Sheet Two-Way Sync</h3>
+      <div style={{marginBottom:10}}><label style={S.lbl}>Web App URL *</label><input style={S.inp} placeholder="https://script.google.com/macros/s/..." value={url} onChange={e=>setUrl(e.target.value)}/></div>
+      <div style={{marginBottom:10}}><label style={S.lbl}>Spreadsheet ID *</label><input style={S.inp} placeholder="From your Google Sheet URL" value={sid} onChange={e=>setSid(e.target.value)}/><p style={{fontSize:11,color:'#8a7e6b',marginTop:2}}>docs.google.com/spreadsheets/d/<strong>THIS_PART</strong>/edit</p></div>
+      <div style={{display:'flex',gap:8,flexWrap:'wrap',marginBottom:10}}>
+        <button style={S.btnP} onClick={()=>{if(typeof connect==='function')connect();else{LS.set('url',url);LS.set('sid',sid);notify("Saved — reload to connect","success");}}}><Ic name="link" size={15}/> Connect & Setup</button>
+        {conn&&<button style={S.btnS} onClick={()=>{if(typeof fullSync==='function')fullSync();}}><Ic name="sync" size={15}/> Pull from Sheet</button>}
+        {conn&&<button style={S.btnS} onClick={()=>{if(typeof backup==='function')backup();}}><Ic name="cloud" size={15}/> Push All to Sheet</button>}
+      </div>
+      {conn&&<div style={{padding:'8px 12px',background:'#ecfdf5',borderRadius:6,display:'flex',alignItems:'center',gap:6,fontSize:12.5}}>
+        <div style={{width:8,height:8,borderRadius:'50%',background:'#27ae60'}}/>
+        <span style={{color:'#27ae60',fontWeight:600}}>Connected</span>
+        {lastSync&&<span style={{color:'#8a7e6b',marginLeft:6}}>Last sync: {lastSync}</span>}
+      </div>}
+      {!conn&&<div style={{padding:12,background:'#faf8f4',borderRadius:8,fontSize:12,color:'#6b6358',lineHeight:1.6,border:'1px solid #e8e0d0',marginTop:6}}>
+        <strong style={{color:'#3a2e1a'}}>Setup Steps:</strong><br/>
+        1. Create a new Google Sheet<br/>
+        2. Extensions → Apps Script → paste the backend code<br/>
+        3. Deploy → New Deployment → Web App (Execute as: Me, Access: Anyone)<br/>
+        4. Copy Web App URL + Sheet ID here<br/>
+        5. Click "Connect & Setup" — all 9 sheets are auto-created!<br/>
+        <br/>All data saves locally + syncs to Sheet on every save.
+      </div>}
+    </div>
+  </div>;
+}
+
+// ═══════════════════════════════════════
+// RENDER
+// ═══════════════════════════════════════
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body>
+</html>
