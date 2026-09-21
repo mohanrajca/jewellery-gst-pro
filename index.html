@@ -347,11 +347,39 @@ function App(){
       const r=await apiCall(url,sid,'getAll',{});
       if(r.success&&r.data){
         const d=r.data;
-        if(d.customers)setCust(d.customers.map(c=>({id:c.id,name:c.name||'',type:c.type||'Retailer',gstin:c.gstin||'',address:c.address||'',city:c.city||'',state:c.state||'',stateCode:c.statecode||c.stateCode||'',phone:c.phone||'',email:c.email||'',createdAt:c.createdat||''})));
+        // ═══ COMPANY PROFILE from Sheet ═══
+        if(d.companyProfile||d.companyprofile){
+          const cp=d.companyProfile||d.companyprofile;
+          const mapped={
+            companyName:cp.name||cp.companyname||'',
+            pan:cp.pan||'',
+            gstin:cp.gstin||'',
+            address:cp.address1||cp.address||'',
+            address2:cp.address2||'',
+            city:cp.city||'',
+            state:cp.state||'',
+            stateCode:String(cp.statecode||cp.stateCode||'').trim(),
+            phone:cp.mobileno||cp.mobile||cp.phone||'',
+            email:cp.emailid||cp.email||'',
+            bankName:cp.bankname||'',
+            ifsc:cp.ifsccode||cp.ifsc||'',
+            accountNo:cp.accountno||cp.accountnumber||''
+          };
+          // Auto-detect stateCode from state name if missing
+          if(mapped.state&&!mapped.stateCode){const st=STATES.find(s=>s.n.toLowerCase()===mapped.state.toLowerCase());if(st)mapped.stateCode=st.c;}
+          // Auto-detect stateCode from GSTIN first 2 digits
+          if(!mapped.stateCode&&mapped.gstin&&mapped.gstin.length>=2){
+            const gc=mapped.gstin.substring(0,2);const st=STATES.find(s=>s.c===gc);
+            if(st){mapped.stateCode=st.c;if(!mapped.state)mapped.state=st.n;}
+          }
+          setCo(prev=>({...prev,...mapped}));LS.set('company',{...company,...mapped});
+          notify("✓ Company profile loaded from Google Sheet","success");
+        }
+        if(d.customers)setCust(d.customers.map(c=>({id:c.id,name:c.name||'',type:c.type||'Retailer',gstin:c.gstin||'',address:c.address||'',city:c.city||'',state:c.state||'',stateCode:String(c.statecode||c.stateCode||'').trim(),phone:c.phone||'',email:c.email||'',createdAt:c.createdat||''})));
         if(d.products)setProd(d.products.map(p=>({id:p.id,name:p.name||'',hsn:p.hsn||'7113',defaultPurity:p.defaultpurity||p.defaultPurity||'916',makingType:p.makingtype||p.makingType||'per_gm',makingCharge:+(p.makingcharge||p.makingCharge||0),defaultGst:+(p.defaultgst||p.defaultGst||3),description:p.description||'',createdAt:p.createdat||''})));
-        if(d.invoices)setInv(d.invoices.map(v=>{let items=[];try{items=typeof v.itemsjson==='string'?JSON.parse(v.itemsjson):(v.items||[])}catch{}return{id:v.id,invoiceNumber:v.invoicenumber||'',invoiceDate:v.invoicedate||'',dueDate:v.duedate||'',invoiceType:v.invoicetype||'B2B',customerName:v.customername||'',customerGstin:v.customergstin||'',customerAddress:v.customeraddress||'',customerState:v.customerstate||'',customerStateCode:v.customerstatecode||'',customerPhone:v.customerphone||'',taxableAmount:+(v.taxableamount||0),cgstAmount:+(v.cgstamount||0),sgstAmount:+(v.sgstamount||0),igstAmount:+(v.igstamount||0),grandTotal:+(v.grandtotal||0),items,notes:v.notes||'',losRef:v.losref||'',createdBy:v.createdby||'',createdAt:v.createdat||''};}));
+        if(d.invoices)setInv(d.invoices.map(v=>{let items=[];try{items=typeof v.itemsjson==='string'?JSON.parse(v.itemsjson):(v.items||[])}catch{}return{id:v.id,invoiceNumber:v.invoicenumber||'',invoiceDate:v.invoicedate||'',dueDate:v.duedate||'',invoiceType:v.invoicetype||'B2B',customerName:v.customername||'',customerGstin:v.customergstin||'',customerAddress:v.customeraddress||'',customerState:v.customerstate||'',customerStateCode:String(v.customerstatecode||'').trim(),customerPhone:v.customerphone||'',taxableAmount:+(v.taxableamount||0),cgstAmount:+(v.cgstamount||0),sgstAmount:+(v.sgstamount||0),igstAmount:+(v.igstamount||0),grandTotal:+(v.grandtotal||0),items,notes:v.notes||'',losRef:v.losref||'',createdBy:v.createdby||'',createdAt:v.createdat||''};}));
         if(d.dcs)setDcs(d.dcs.map(dc=>{let items=[];try{items=typeof dc.itemsjson==='string'?JSON.parse(dc.itemsjson):(dc.items||[])}catch{}return{id:dc.id,dcNumber:dc.dcnumber||'',date:dc.date||'',dueDate:dc.duedate||'',jobworkerName:dc.jobworkername||'',jobworkerAddress:dc.jobworkeraddress||'',purpose:dc.purpose||'',status:dc.status||'Sent',totalWeight:+(dc.totalweight||0),items,notes:dc.notes||'',createdAt:dc.createdat||''};}));
-        if(d.lineofsales||d.lineOfSales){const los=d.lineofsales||d.lineOfSales;setLos(los.map(l=>{let items=[];try{items=typeof l.itemsjson==='string'?JSON.parse(l.itemsjson):(l.items||[])}catch{}return{id:l.id,losNumber:l.losnumber||'',date:l.date||'',retailerName:l.retailername||'',retailerGstin:l.retailergstin||'',retailerAddress:l.retaileraddress||'',retailerState:l.retailerstate||'',retailerStateCode:l.retailerstatecode||'',retailerPhone:l.retailerphone||'',city:l.city||'',status:l.status||'On Approval',totalWeight:+(l.totalweight||0),totalValue:+(l.totalvalue||0),items,notes:l.notes||'',createdAt:l.createdat||''};}));}
+        if(d.lineofsales||d.lineOfSales){const los=d.lineofsales||d.lineOfSales;setLos(los.map(l=>{let items=[];try{items=typeof l.itemsjson==='string'?JSON.parse(l.itemsjson):(l.items||[])}catch{}return{id:l.id,losNumber:l.losnumber||'',date:l.date||'',retailerName:l.retailername||'',retailerGstin:l.retailergstin||'',retailerAddress:l.retaileraddress||'',retailerState:l.retailerstate||'',retailerStateCode:String(l.retailerstatecode||'').trim(),retailerPhone:l.retailerphone||'',city:l.city||'',status:l.status||'On Approval',totalWeight:+(l.totalweight||0),totalValue:+(l.totalvalue||0),items,notes:l.notes||'',createdAt:l.createdat||''};}));}
         if(d.expenses)setExp(d.expenses.map(e=>({id:e.id,voucherNo:e.voucherno||'',date:e.date||'',category:e.category||'',vendor:e.vendor||'',amount:+(e.amount||0),gstRate:+(e.gstrate||0),gstAmount:+(e.gstamount||0),total:+(e.total||0),paymentMethod:e.paymentmethod||'Cash',description:e.description||'',createdBy:e.createdby||''})));
         if(d.receipts)setRec(d.receipts.map(r=>({id:r.id,receiptNo:r.receiptno||'',date:r.date||'',receivedFrom:r.receivedfrom||'',amount:+(r.amount||0),mode:r.mode||'Cash',towards:r.towards||'',description:r.description||'',createdBy:r.createdby||''})));
         if(d.payments)setPay(d.payments.map(p=>({id:p.id,paymentNo:p.paymentno||'',date:p.date||'',paidTo:p.paidto||'',amount:+(p.amount||0),mode:p.mode||'Cash',towards:p.towards||'',description:p.description||'',createdBy:p.createdby||''})));
@@ -362,8 +390,15 @@ function App(){
     setSyncing(false);
   };
 
+  // Push company profile to Google Sheet
+  const pushProfile=async()=>{
+    const r=await api('saveCompanyProfile',company);
+    if(r&&r.success)notify("Company profile pushed to Google Sheet","success");
+    else notify("Profile push failed","warning");
+  };
+
   // Backup — push all to sheet
-  const backup=async()=>{setSyncing(true);await api('backup',{customers,products,invoices,dcs,lineOfSales,expenses,receipts,payments});notify("Full backup pushed","success");setSyncing(false);};
+  const backup=async()=>{setSyncing(true);await api('saveCompanyProfile',company);await api('backup',{customers,products,invoices,dcs,lineOfSales,expenses,receipts,payments});notify("Full backup pushed (with company profile)","success");setSyncing(false);};
 
   // Auto-connect on load
   useEffect(()=>{if(url&&sid&&!conn){connect();}},[]);
@@ -659,7 +694,7 @@ function App(){
       {/* ═══ SETTINGS ═══ */}
       {page==='settings'&&<SettingsPage company={company} setCo={setCo} logo={logo} setLogo={setLogo}
         settings={settings} setSettings={setSettings} url={url} setUrl={setUrl} sid={sid} setSid={setSid}
-        conn={conn} syncing={syncing} connect={connect} fullSync={fullSync} backup={backup} lastSync={lastSync} notify={notify}/>}
+        conn={conn} syncing={syncing} connect={connect} fullSync={fullSync} backup={backup} pushProfile={pushProfile} lastSync={lastSync} notify={notify}/>}
 
     </div>
 
@@ -1328,7 +1363,7 @@ function SalesRegister({invoices,company,logo}){
 // ═══════════════════════════════════════
 // SETTINGS PAGE
 // ═══════════════════════════════════════
-function SettingsPage({company,setCo,logo,setLogo,settings,setSettings,url,setUrl,sid,setSid,conn,syncing,connect,fullSync,backup,lastSync,notify}){
+function SettingsPage({company,setCo,logo,setLogo,settings,setSettings,url,setUrl,sid,setSid,conn,syncing,connect,fullSync,backup,pushProfile,lastSync,notify}){
   const handleLogo=(e)=>{
     const file=e.target.files[0];if(!file)return;
     const reader=new FileReader();
@@ -1359,7 +1394,7 @@ function SettingsPage({company,setCo,logo,setLogo,settings,setSettings,url,setUr
         <div key={k} style={{marginBottom:10}}><label style={S.lbl}>{l}</label><input style={S.inp} value={company[k]||''} onChange={e=>setCo(p=>({...p,[k]:e.target.value}))}/></div>
       )}
       <div style={{marginBottom:10}}><label style={S.lbl}>State</label><select style={S.inp} value={company.state||''} onChange={e=>{const v=e.target.value;const s=STATES.find(x=>x.n===v);setCo(p=>({...p,state:v,stateCode:s?.c||''}));}}><option value="">Select</option>{STATES.map(s=><option key={s.c} value={s.n}>{s.n} ({s.c})</option>)}</select></div>
-      <button style={S.btnP} onClick={()=>{LS.set('company',company);notify("Company profile saved","success");}}><Ic name="save" size={15}/> Save Profile</button>
+      <button style={S.btnP} onClick={()=>{LS.set('company',company);notify("Company profile saved locally","success");if(conn&&typeof pushProfile==='function')pushProfile();}}><Ic name="save" size={15}/> Save Profile {conn?'& Sync to Sheet':''}</button>
     </div>
 
     {/* Defaults */}

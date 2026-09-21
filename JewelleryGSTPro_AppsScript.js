@@ -17,6 +17,7 @@
 
 // ── Sheet Names ──
 const SHEETS = {
+  companyProfile: 'company profile',
   customers: 'Customers',
   products: 'Products',
   invoices: 'Invoices',
@@ -30,6 +31,7 @@ const SHEETS = {
 
 // ── Column Headers for each sheet ──
 const HEADERS = {
+  companyProfile: ['name','pan','gstin','address1','address2','city','state','stateCode','emailId','mobileNo','bankName','ifscCode','accountNo'],
   customers: ['id','name','type','gstin','address','city','state','stateCode','phone','email','createdAt'],
   products: ['id','name','hsn','defaultPurity','makingType','makingCharge','defaultGst','description','createdAt'],
   invoices: ['id','invoiceNumber','invoiceDate','dueDate','invoiceType','customerName','customerGstin','customerAddress','customerState','customerStateCode','customerPhone','taxableAmount','cgstAmount','sgstAmount','igstAmount','grandTotal','itemsJson','notes','losRef','createdBy','createdAt'],
@@ -73,6 +75,10 @@ function handleAction(ss, action, data) {
     // ── Setup ──
     case 'setupSheets':     return setupSheets(ss);
     case 'getAll':          return getAll(ss);
+
+    // ── Company Profile ──
+    case 'getCompanyProfile':  return getCompanyProfile(ss);
+    case 'saveCompanyProfile': return saveCompanyProfile(ss, data);
 
     // ── Customers ──
     case 'syncCustomer':    return upsertRow(ss, SHEETS.customers, HEADERS.customers, data);
@@ -153,8 +159,22 @@ function setupSheets(ss) {
 // ══════════════════════════════════════
 function getAll(ss) {
   const data = {};
+  
+  // ── Company Profile (single row) ──
+  const cpSheet = ss.getSheetByName(SHEETS.companyProfile);
+  if (cpSheet && cpSheet.getLastRow() > 1) {
+    const rows = cpSheet.getDataRange().getValues();
+    const headers = rows[0].map(h => String(h).toLowerCase().replace(/\s+/g, ''));
+    if (rows.length >= 2) {
+      const profile = {};
+      headers.forEach((h, i) => { profile[h] = rows[1][i]; });
+      data.companyProfile = profile;
+    }
+  }
+  
+  // ── All other sheets ──
   Object.keys(SHEETS).forEach(key => {
-    if (key === 'users') return; // Don't send user passwords
+    if (key === 'users' || key === 'companyProfile') return;
     const name = SHEETS[key];
     const sheet = ss.getSheetByName(name);
     if (sheet && sheet.getLastRow() > 1) {
@@ -252,6 +272,84 @@ function prepLOS(data) {
     ...data,
     itemsJson: data.items ? JSON.stringify(data.items) : (data.itemsJson || '[]')
   };
+}
+
+// ══════════════════════════════════════
+// COMPANY PROFILE — Read & Write
+// ══════════════════════════════════════
+
+/** Read company profile (row 2 of 'company profile' sheet) */
+function getCompanyProfile(ss) {
+  const sheetName = SHEETS.companyProfile;
+  const sheet = ss.getSheetByName(sheetName);
+  if (!sheet) return { success: false, error: 'Sheet "' + sheetName + '" not found' };
+  
+  const rows = sheet.getDataRange().getValues();
+  if (rows.length < 2) return { success: true, profile: null, message: 'No company profile data yet' };
+  
+  // Read headers from row 1, data from row 2
+  const headers = rows[0].map(h => String(h).toLowerCase().replace(/\s+/g, ''));
+  const profile = {};
+  headers.forEach((h, i) => { profile[h] = rows[1][i] || ''; });
+  
+  return { success: true, profile };
+}
+
+/** Save company profile (always writes to row 2) */
+function saveCompanyProfile(ss, data) {
+  const sheetName = SHEETS.companyProfile;
+  let sheet = ss.getSheetByName(sheetName);
+  
+  // Create sheet if missing
+  if (!sheet) {
+    sheet = ss.insertSheet(sheetName);
+    const headers = HEADERS.companyProfile;
+    sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
+    sheet.getRange(1, 1, 1, headers.length).setFontWeight('bold');
+    sheet.setFrozenRows(1);
+  }
+  
+  // Read existing headers from the sheet (user may have custom columns)
+  const existingHeaders = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+  const headerKeys = existingHeaders.map(h => String(h).toLowerCase().replace(/\s+/g, ''));
+  
+  // Build row matching sheet's own headers
+  const rowData = headerKeys.map(h => {
+    // Map various header names to our data keys
+    const keyMap = {
+      'name': data.companyName || data.name || '',
+      'companyname': data.companyName || data.name || '',
+      'pan': data.pan || '',
+      'gstin': data.gstin || '',
+      'address1': data.address || data.address1 || '',
+      'address': data.address || data.address1 || '',
+      'address2': data.address2 || '',
+      'city': data.city || '',
+      'state': data.state || '',
+      'statecode': data.stateCode || '',
+      'emailid': data.email || data.emailId || '',
+      'email': data.email || data.emailId || '',
+      'mobileno': data.phone || data.mobileNo || '',
+      'phone': data.phone || data.mobileNo || '',
+      'mobile': data.phone || data.mobileNo || '',
+      'mobileno': data.phone || data.mobileNo || '',
+      'bankname': data.bankName || '',
+      'ifsccode': data.ifsc || data.ifscCode || '',
+      'ifsc': data.ifsc || data.ifscCode || '',
+      'accountno': data.accountNo || '',
+      'accountnumber': data.accountNo || '',
+    };
+    return keyMap[h] !== undefined ? keyMap[h] : (data[h] || '');
+  });
+  
+  // Write to row 2 (always overwrite)
+  if (sheet.getLastRow() < 2) {
+    sheet.appendRow(rowData);
+  } else {
+    sheet.getRange(2, 1, 1, rowData.length).setValues([rowData]);
+  }
+  
+  return { success: true, message: 'Company profile saved to sheet' };
 }
 
 // ══════════════════════════════════════
