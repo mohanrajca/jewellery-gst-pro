@@ -393,12 +393,15 @@ function App(){
       const gst=taxable*(it.gstRate||3)/100;
       taxT+=taxable;gstT+=gst;
     });
-    const isIGST=d.customerStateCode&&company.stateCode&&d.customerStateCode!==company.stateCode;
+    const isIGST=d.customerStateCode&&company.stateCode&&String(d.customerStateCode).trim()!==String(company.stateCode).trim();
     d.taxableAmount=Math.round(taxT*100)/100;
     d.cgstAmount=isIGST?0:Math.round(gstT/2*100)/100;
     d.sgstAmount=isIGST?0:Math.round(gstT/2*100)/100;
     d.igstAmount=isIGST?Math.round(gstT*100)/100:0;
     d.grandTotal=Math.round((taxT+gstT)*100)/100;
+    d.isIGST=isIGST;
+    d.placeOfSupply=d.customerState+' ('+d.customerStateCode+')';
+    d.supplyState=company.state+' ('+company.stateCode+')';
     d.createdAt=d.createdAt||new Date().toISOString();
     
     const isNew=!inv.id||!invoices.find(x=>x.id===inv.id);
@@ -814,9 +817,9 @@ function InvForm({data,onSave,onClose,customers,products,company,notify,settings
   };
 
   // ═══ Place of Supply Logic ═══
-  const posCompanyCode=company.stateCode||'';
-  const posCustCode=f.customerStateCode||'';
-  const posValid=posCompanyCode&&posCustCode;
+  const posCompanyCode=String(company.stateCode||'').trim();
+  const posCustCode=String(f.customerStateCode||'').trim();
+  const posValid=posCompanyCode&&posCustCode&&posCompanyCode!=='undefined'&&posCustCode!=='undefined';
   const isIGST=posValid&&posCustCode!==posCompanyCode;
   const posLabel=!posValid?'⚠ Select customer state for GST type':isIGST?`↔ Inter-State Sale (${posCompanyCode} → ${posCustCode}) — IGST applies`:`✓ Intra-State Sale (${posCompanyCode}) — CGST + SGST applies`;
   const posBg=!posValid?'#fef9e7':isIGST?'#eff6ff':'#ecfdf5';
@@ -1134,7 +1137,7 @@ function DocView({type,data,company,logo}){
 
 // Inline Previews
 function InvPreview({inv,company,logo}){
-  const isIGST=inv.customerStateCode&&company.stateCode&&inv.customerStateCode!==company.stateCode;
+  const isIGST=inv.isIGST||(inv.customerStateCode&&company.stateCode&&String(inv.customerStateCode).trim()!==String(company.stateCode).trim());
   const gstRate=inv.items&&inv.items[0]?(inv.items[0].gstRate||3):3;
   return <div>
     <div style={{display:'flex',justifyContent:'space-between',marginBottom:12,flexWrap:'wrap',gap:12}}>
@@ -1191,7 +1194,7 @@ function ExpPreview({data,company}){return <div><div style={{fontSize:14,fontWei
 
 // Print builders
 function buildInvPrint(inv,company,logo){
-  const isIGST=inv.customerStateCode&&company.stateCode&&inv.customerStateCode!==company.stateCode;
+  const isIGST=inv.isIGST||(inv.customerStateCode&&company.stateCode&&String(inv.customerStateCode).trim()!==String(company.stateCode).trim());
   let itemsHTML='';
   (inv.items||[]).forEach((it,i)=>{
     const mv=(it.netWt||0)*(it.ratePerGm||0);const mk=it.makingType==='per_gm'?(it.makingCharge||0)*(it.netWt||0):it.makingType==='per_pc'?(it.makingCharge||0)*(it.pcs||1):(it.makingCharge||0);const tx=mv+mk+(it.stoneCharges||0);const gst=tx*(it.gstRate||3)/100;
