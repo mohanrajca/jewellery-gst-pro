@@ -801,22 +801,48 @@ function InvForm({data,onSave,onClose,customers,products,company,notify,settings
     set(p=>({...p,customerName:c.name,customerGstin:c.gstin||'',customerAddress:c.address||'',customerState:c.state||'',customerStateCode:c.stateCode||'',customerPhone:c.phone||'',invoiceType:c.gstin?'B2B':'B2CS'}));
   };
 
+  // ═══ GSTIN → State Code auto-detect ═══
+  const handleGstin=(val)=>{
+    const g=val.toUpperCase().replace(/[^A-Z0-9]/g,'');
+    const upd={customerGstin:g};
+    if(g.length>=2){
+      const code=g.substring(0,2);
+      const st=STATES.find(s=>s.c===code);
+      if(st){upd.customerState=st.n;upd.customerStateCode=st.c;upd.invoiceType=g.length>=15?'B2B':'B2CS';}
+    }
+    set(p=>({...p,...upd}));
+  };
+
+  // ═══ Place of Supply Logic ═══
+  const posCompanyCode=company.stateCode||'';
+  const posCustCode=f.customerStateCode||'';
+  const posValid=posCompanyCode&&posCustCode;
+  const isIGST=posValid&&posCustCode!==posCompanyCode;
+  const posLabel=!posValid?'⚠ Select customer state for GST type':isIGST?`↔ Inter-State Sale (${posCompanyCode} → ${posCustCode}) — IGST applies`:`✓ Intra-State Sale (${posCompanyCode}) — CGST + SGST applies`;
+  const posBg=!posValid?'#fef9e7':isIGST?'#eff6ff':'#ecfdf5';
+  const posColor=!posValid?'#856404':isIGST?'#1a56db':'#166534';
+
   // Totals
   const calcItem=(it)=>{
     const metalVal=(it.netWt||0)*(it.ratePerGm||0);
     const makingVal=it.makingType==='per_gm'?(it.makingCharge||0)*(it.netWt||0):it.makingType==='per_pc'?(it.makingCharge||0)*(it.pcs||1):(it.makingCharge||0);
     const taxable=metalVal+makingVal+(it.stoneCharges||0);
-    const gst=taxable*(it.gstRate||3)/100;
-    return {metalVal,makingVal,taxable,gst,total:taxable+gst};
+    const gstRate=it.gstRate||3;
+    const gst=taxable*gstRate/100;
+    const cgst=isIGST?0:gst/2;
+    const sgst=isIGST?0:gst/2;
+    const igst=isIGST?gst:0;
+    return {metalVal,makingVal,taxable,gstRate,gst,cgst,sgst,igst,total:taxable+gst};
   };
 
-  const totals=f.items.reduce((acc,it)=>{const c=calcItem(it);return{tax:acc.tax+c.taxable,gst:acc.gst+c.gst,wt:acc.wt+(it.netWt||0)};},{tax:0,gst:0,wt:0});
-  const isIGST=f.customerStateCode&&company.stateCode&&f.customerStateCode!==company.stateCode;
+  const totals=f.items.reduce((acc,it)=>{const c=calcItem(it);return{tax:acc.tax+c.taxable,gst:acc.gst+c.gst,cgst:acc.cgst+c.cgst,sgst:acc.sgst+c.sgst,igst:acc.igst+c.igst,wt:acc.wt+(it.netWt||0)};},{tax:0,gst:0,cgst:0,sgst:0,igst:0,wt:0});
   const grand=totals.tax+totals.gst;
 
   const doSave=()=>{
     if(!f.customerName){notify("Customer name required","warning");return;}
     if(!f.items.length||!f.items[0].productName){notify("At least one item required","warning");return;}
+    if(!f.customerStateCode){notify("⚠ Customer State is required for Place of Supply / GST calculation","warning");return;}
+    if(!company.stateCode){notify("⚠ Set your Company State in Settings first","warning");return;}
     onSave({...f,invoiceNumber:f.invoiceNumber||'INV-'+String(count+1).padStart(4,'0')});
   };
 
@@ -828,6 +854,14 @@ function InvForm({data,onSave,onClose,customers,products,company,notify,settings
       <div><label style={S.lbl}>Type</label><select style={S.inp} value={f.invoiceType} onChange={e=>set(p=>({...p,invoiceType:e.target.value}))}><option value="B2B">B2B</option><option value="B2CS">B2CS</option></select></div>
     </div>
 
+    {/* ═══ PLACE OF SUPPLY INDICATOR ═══ */}
+    <div style={{padding:'8px 14px',background:posBg,borderRadius:8,border:`1.5px solid ${posColor}22`,marginBottom:14,display:'flex',alignItems:'center',gap:8,flexWrap:'wrap'}}>
+      <span style={{fontSize:12.5,fontWeight:700,color:posColor}}>{posLabel}</span>
+      {posValid&&<span style={{marginLeft:'auto',fontSize:11,color:posColor,opacity:.7}}>
+        {isIGST?'IGST @':'CGST + SGST @'} {f.items[0]?.gstRate||3}% {!isIGST?`(${(f.items[0]?.gstRate||3)/2}% + ${(f.items[0]?.gstRate||3)/2}%)`:''}
+      </span>}
+    </div>
+
     {/* Customer */}
     <div style={{padding:14,background:'#faf8f4',borderRadius:10,border:'1px solid #e8e0d0',marginBottom:16}}>
       <h4 style={{margin:'0 0 10px',fontSize:13,fontWeight:700,color:'#5a5040'}}>Customer Details</h4>
@@ -837,12 +871,13 @@ function InvForm({data,onSave,onClose,customers,products,company,notify,settings
             <option value="">Select or type...</option>{customers.map(c=><option key={c.id} value={c.name}>{c.name} {c.city?'('+c.city+')':''}</option>)}
           </select>
         </div>
-        <div><label style={S.lbl}>GSTIN</label><input style={{...S.inp,textTransform:'uppercase',fontFamily:'monospace'}} value={f.customerGstin} maxLength={15} onChange={e=>set(p=>({...p,customerGstin:e.target.value.toUpperCase()}))}/></div>
+        <div><label style={S.lbl}>GSTIN <span style={{fontWeight:400,color:'#8a7e6b'}}>(auto-fills state)</span></label><input style={{...S.inp,textTransform:'uppercase',fontFamily:'monospace'}} value={f.customerGstin} maxLength={15} onChange={e=>handleGstin(e.target.value)}/></div>
         <div><label style={S.lbl}>Address</label><input style={S.inp} value={f.customerAddress} onChange={e=>set(p=>({...p,customerAddress:e.target.value}))}/></div>
         <div><label style={S.lbl}>Phone</label><input style={S.inp} value={f.customerPhone} onChange={e=>set(p=>({...p,customerPhone:e.target.value}))}/></div>
-        <div><label style={S.lbl}>State</label><select style={S.inp} value={f.customerState} onChange={e=>{const v=e.target.value;const s=STATES.find(x=>x.n===v);set(p=>({...p,customerState:v,customerStateCode:s?.c||''}));}}><option value="">Select</option>{STATES.map(s=><option key={s.c} value={s.n}>{s.n} ({s.c})</option>)}</select></div>
-        <div><label style={S.lbl}>State Code</label><input readOnly style={{...S.inp,background:'#f0ead8',fontFamily:'monospace',fontWeight:700}} value={f.customerStateCode||'—'}/></div>
+        <div><label style={{...S.lbl,color:!f.customerStateCode?'#c0392b':'#5a5040'}}>State (Place of Supply) *</label><select style={{...S.inp,borderColor:!f.customerStateCode?'#c0392b':'#ddd5c5'}} value={f.customerState} onChange={e=>{const v=e.target.value;const s=STATES.find(x=>x.n===v);set(p=>({...p,customerState:v,customerStateCode:s?.c||''}));}}><option value="">— Select State —</option>{STATES.map(s=><option key={s.c} value={s.n}>{s.n} ({s.c})</option>)}</select></div>
+        <div><label style={S.lbl}>State Code</label><input readOnly style={{...S.inp,background:f.customerStateCode?'#f0ead8':'#fdeaea',fontFamily:'monospace',fontWeight:700}} value={f.customerStateCode||'Required'}/></div>
       </div>
+      {!posCompanyCode&&<div style={{marginTop:8,padding:'6px 10px',background:'#fdeaea',borderRadius:6,fontSize:12,color:'#c0392b'}}>⚠ Your company state is not set. Go to Settings → Company Profile → set State first.</div>}
     </div>
 
     {/* Line Items — Jewellery */}
@@ -876,14 +911,17 @@ function InvForm({data,onSave,onClose,customers,products,company,notify,settings
 
     {/* Totals */}
     <div style={{padding:14,background:'#3a2e1a',borderRadius:10,color:'#e8d5a3',marginBottom:16}}>
-      <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:8,padding:'5px 10px',background:'rgba(255,255,255,.06)',borderRadius:6,fontSize:12}}>
-        <span>{isIGST?'↔ Inter-State → IGST':'✓ Intra-State → CGST + SGST'}</span>
-        <span style={{marginLeft:'auto',fontSize:10.5,opacity:.6}}>Net Wt: {fW(totals.wt)}</span>
+      <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:8,padding:'6px 10px',background:isIGST?'rgba(26,86,219,.15)':'rgba(22,101,52,.15)',borderRadius:6,fontSize:12}}>
+        <span style={{fontWeight:700}}>{isIGST?'↔ INTER-STATE SUPPLY — IGST':'✓ INTRA-STATE SUPPLY — CGST + SGST'}</span>
+        <span style={{marginLeft:'auto',fontSize:10.5,opacity:.7}}>POS: {posCustCode||'—'} | Supply: {posCompanyCode||'—'}</span>
       </div>
-      <div style={{display:'flex',justifyContent:'space-between',padding:'3px 0',fontSize:13}}><span>Taxable</span><span style={{fontWeight:600}}>{fC(totals.tax)}</span></div>
-      {!isIGST&&<><div style={{display:'flex',justifyContent:'space-between',padding:'3px 0',fontSize:13}}><span>CGST</span><span>{fC(totals.gst/2)}</span></div>
-        <div style={{display:'flex',justifyContent:'space-between',padding:'3px 0',fontSize:13}}><span>SGST</span><span>{fC(totals.gst/2)}</span></div></>}
-      {isIGST&&<div style={{display:'flex',justifyContent:'space-between',padding:'3px 0',fontSize:13}}><span>IGST</span><span>{fC(totals.gst)}</span></div>}
+      <div style={{display:'flex',justifyContent:'space-between',padding:'3px 0',fontSize:13}}><span>Taxable Amount</span><span style={{fontWeight:600,fontFamily:'monospace'}}>{fC(totals.tax)}</span></div>
+      <div style={{display:'flex',justifyContent:'space-between',padding:'1px 0',fontSize:10,opacity:.5}}><span>Net Weight: {fW(totals.wt)}</span></div>
+      {!isIGST&&<>
+        <div style={{display:'flex',justifyContent:'space-between',padding:'3px 0',fontSize:13}}><span>CGST @ {(f.items[0]?.gstRate||3)/2}%</span><span style={{fontFamily:'monospace'}}>{fC(totals.cgst)}</span></div>
+        <div style={{display:'flex',justifyContent:'space-between',padding:'3px 0',fontSize:13}}><span>SGST @ {(f.items[0]?.gstRate||3)/2}%</span><span style={{fontFamily:'monospace'}}>{fC(totals.sgst)}</span></div>
+      </>}
+      {isIGST&&<div style={{display:'flex',justifyContent:'space-between',padding:'3px 0',fontSize:13}}><span>IGST @ {f.items[0]?.gstRate||3}%</span><span style={{fontFamily:'monospace'}}>{fC(totals.igst)}</span></div>}
       <div style={{display:'flex',justifyContent:'space-between',padding:'7px 0 0',fontSize:17,fontWeight:800,borderTop:'1px solid rgba(255,255,255,.15)',marginTop:6}}><span>Grand Total</span><span>{fC(grand)}</span></div>
       <div style={{fontSize:11,opacity:.6,marginTop:3}}>{numWords(grand)}</div>
     </div>
@@ -1097,18 +1135,24 @@ function DocView({type,data,company,logo}){
 // Inline Previews
 function InvPreview({inv,company,logo}){
   const isIGST=inv.customerStateCode&&company.stateCode&&inv.customerStateCode!==company.stateCode;
+  const gstRate=inv.items&&inv.items[0]?(inv.items[0].gstRate||3):3;
   return <div>
-    <div style={{display:'flex',justifyContent:'space-between',marginBottom:16,flexWrap:'wrap',gap:12}}>
+    <div style={{display:'flex',justifyContent:'space-between',marginBottom:12,flexWrap:'wrap',gap:12}}>
       <div>
         {logo&&<img src={logo} style={{width:50,height:50,objectFit:'contain',borderRadius:6,marginBottom:6}}/>}
         <div style={{fontSize:16,fontWeight:700,color:'#3a2e1a'}}>{company.companyName||'Company'}</div>
-        <div style={{fontSize:11,color:'#8a7e6b'}}>GSTIN: {company.gstin||'—'}</div>
+        <div style={{fontSize:11,color:'#8a7e6b'}}>GSTIN: {company.gstin||'—'} | State: {company.state} ({company.stateCode})</div>
       </div>
       <div style={{textAlign:'right'}}>
         <Badge text="TAX INVOICE"/>
         <div style={{fontFamily:'monospace',fontSize:18,fontWeight:700,marginTop:4}}>{inv.invoiceNumber}</div>
         <div style={{fontSize:11.5,color:'#8a7e6b'}}>Date: {fD(inv.invoiceDate)}</div>
       </div>
+    </div>
+    {/* Place of Supply Banner */}
+    <div style={{padding:'6px 12px',background:isIGST?'#eff6ff':'#ecfdf5',borderRadius:6,marginBottom:10,fontSize:11.5,fontWeight:700,color:isIGST?'#1a56db':'#166534',display:'flex',justifyContent:'space-between',flexWrap:'wrap'}}>
+      <span>{isIGST?'↔ Inter-State Supply — IGST':'✓ Intra-State Supply — CGST + SGST'}</span>
+      <span>Place of Supply: {inv.customerState} ({inv.customerStateCode})</span>
     </div>
     <div style={{padding:'10px 0',borderTop:'1px solid #e8e0d0',borderBottom:'1px solid #e8e0d0',marginBottom:12}}>
       <div style={{fontSize:10,fontWeight:700,color:'#6b4f1d',letterSpacing:'.5px',marginBottom:3}}>BILL TO</div>
@@ -1128,8 +1172,8 @@ function InvPreview({inv,company,logo}){
     <div style={{display:'flex',justifyContent:'flex-end',marginTop:12}}>
       <div className="totals-panel" style={{width:260}}>
         <div style={{display:'flex',justifyContent:'space-between',fontSize:13,padding:'3px 0'}}><span style={{color:'#6b6358'}}>Taxable</span><span>{fC(inv.taxableAmount)}</span></div>
-        {!isIGST&&<><div style={{display:'flex',justifyContent:'space-between',fontSize:13,padding:'3px 0'}}><span style={{color:'#6b6358'}}>CGST</span><span>{fC(inv.cgstAmount)}</span></div><div style={{display:'flex',justifyContent:'space-between',fontSize:13,padding:'3px 0'}}><span style={{color:'#6b6358'}}>SGST</span><span>{fC(inv.sgstAmount)}</span></div></>}
-        {isIGST&&<div style={{display:'flex',justifyContent:'space-between',fontSize:13,padding:'3px 0'}}><span style={{color:'#6b6358'}}>IGST</span><span>{fC(inv.igstAmount)}</span></div>}
+        {!isIGST&&<><div style={{display:'flex',justifyContent:'space-between',fontSize:13,padding:'3px 0'}}><span style={{color:'#6b6358'}}>CGST @ {gstRate/2}%</span><span>{fC(inv.cgstAmount)}</span></div><div style={{display:'flex',justifyContent:'space-between',fontSize:13,padding:'3px 0'}}><span style={{color:'#6b6358'}}>SGST @ {gstRate/2}%</span><span>{fC(inv.sgstAmount)}</span></div></>}
+        {isIGST&&<div style={{display:'flex',justifyContent:'space-between',fontSize:13,padding:'3px 0'}}><span style={{color:'#6b6358'}}>IGST @ {gstRate}%</span><span>{fC(inv.igstAmount)}</span></div>}
         <div style={{display:'flex',justifyContent:'space-between',fontSize:15,fontWeight:800,padding:'6px 0 0',borderTop:'2px solid #3a2e1a',marginTop:4}}><span>Grand Total</span><span style={{color:'#6b4f1d'}}>{fC(inv.grandTotal)}</span></div>
         <div style={{fontSize:10.5,color:'#8a7e6b',fontStyle:'italic',marginTop:2}}>{numWords(inv.grandTotal)}</div>
       </div>
@@ -1153,10 +1197,12 @@ function buildInvPrint(inv,company,logo){
     const mv=(it.netWt||0)*(it.ratePerGm||0);const mk=it.makingType==='per_gm'?(it.makingCharge||0)*(it.netWt||0):it.makingType==='per_pc'?(it.makingCharge||0)*(it.pcs||1):(it.makingCharge||0);const tx=mv+mk+(it.stoneCharges||0);const gst=tx*(it.gstRate||3)/100;
     itemsHTML+=`<tr><td style="padding:6px 4px;border-bottom:1px solid #eee;font-size:12px">${i+1}</td><td style="padding:6px 4px;border-bottom:1px solid #eee;font-weight:600;font-size:12px">${it.productName}<br/><span style="font-size:10px;color:#888">HSN:${it.hsn} | ${it.purity}</span></td><td style="padding:6px 4px;border-bottom:1px solid #eee;text-align:right;font-size:12px">${it.pcs}</td><td style="padding:6px 4px;border-bottom:1px solid #eee;text-align:right;font-size:12px">${(it.netWt||0).toFixed(3)}</td><td style="padding:6px 4px;border-bottom:1px solid #eee;text-align:right;font-size:12px">${fC(it.ratePerGm)}</td><td style="padding:6px 4px;border-bottom:1px solid #eee;text-align:right;font-size:12px">${fC(mv)}</td><td style="padding:6px 4px;border-bottom:1px solid #eee;text-align:right;font-size:12px">${fC(mk)}</td><td style="padding:6px 4px;border-bottom:1px solid #eee;text-align:right;font-size:12px">${fC(it.stoneCharges||0)}</td><td style="padding:6px 4px;border-bottom:1px solid #eee;text-align:right;font-weight:600;font-size:12px">${fC(tx)}</td><td style="padding:6px 4px;border-bottom:1px solid #eee;text-align:right;font-size:12px">${it.gstRate}%</td><td style="padding:6px 4px;border-bottom:1px solid #eee;text-align:right;font-weight:700;font-size:12px">${fC(tx+gst)}</td></tr>`;
   });
-  let taxHTML=isIGST?`<tr><td style="padding:4px 0;font-size:12px">IGST</td><td style="text-align:right;font-size:12px">${fC(inv.igstAmount)}</td></tr>`:`<tr><td style="padding:4px 0;font-size:12px">CGST</td><td style="text-align:right;font-size:12px">${fC(inv.cgstAmount)}</td></tr><tr><td style="padding:4px 0;font-size:12px">SGST</td><td style="text-align:right;font-size:12px">${fC(inv.sgstAmount)}</td></tr>`;
+  let taxHTML=isIGST?`<tr><td style="padding:4px 0;font-size:12px">IGST @ ${inv.items&&inv.items[0]?(inv.items[0].gstRate||3):3}%</td><td style="text-align:right;font-family:monospace;font-size:12px">${fC(inv.igstAmount)}</td></tr>`:`<tr><td style="padding:4px 0;font-size:12px">CGST @ ${inv.items&&inv.items[0]?(inv.items[0].gstRate||3)/2:1.5}%</td><td style="text-align:right;font-family:monospace;font-size:12px">${fC(inv.cgstAmount)}</td></tr><tr><td style="padding:4px 0;font-size:12px">SGST @ ${inv.items&&inv.items[0]?(inv.items[0].gstRate||3)/2:1.5}%</td><td style="text-align:right;font-family:monospace;font-size:12px">${fC(inv.sgstAmount)}</td></tr>`;
+  const posLine=isIGST?'Inter-State Supply | Place of Supply: '+inv.customerState+' ('+inv.customerStateCode+')':'Intra-State Supply | Place of Supply: '+(company.state||'')+' ('+(company.stateCode||'')+')';
 
   return `<div style="max-width:780px;margin:0 auto;background:#fff">
     ${buildPrintHeader(company,'TAX INVOICE',inv.invoiceNumber,fD(inv.invoiceDate),logo)}
+    <div style="padding:4px 30px;background:${isIGST?'#eff6ff':'#ecfdf5'};font-size:10.5px;color:${isIGST?'#1a56db':'#166534'};font-weight:600;letter-spacing:.3px">${posLine}</div>
     <div style="padding:16px 30px;border-bottom:1px solid #eee">
       <div style="font-size:10px;font-weight:700;color:#6b4f1d;letter-spacing:1px;margin-bottom:4px">BILL TO</div>
       <div style="font-size:14px;font-weight:700">${inv.customerName}</div>
